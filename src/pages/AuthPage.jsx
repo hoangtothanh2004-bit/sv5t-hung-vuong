@@ -1,27 +1,33 @@
 import React, { useState } from 'react';
 import { 
   Mail, 
+  Lock,
+  Eye,
+  EyeOff,
   User, 
   GraduationCap, 
   Users, 
   ArrowRight, 
   Sparkles,
   CheckCircle2,
-  KeyRound,
-  ShieldCheck
+  KeyRound
 } from 'lucide-react';
 import { ORG_NAME, UNIVERSITY_NAME, FACULTIES } from '../data/faculties';
 
 export default function AuthPage({ onLogin, onRegisterStudent }) {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   
-  // Login state (Password removed as requested)
+  // Login state
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Register state (Password removed as requested)
+  // Register state
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regStudentCode, setRegStudentCode] = useState('');
   const [regFacultyId, setRegFacultyId] = useState('ktcn');
   const [regClass, setRegClass] = useState('');
@@ -34,29 +40,37 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
     const email = loginEmail.trim().toLowerCase();
 
     if (!email) {
-      setLoginError('Vui lòng nhập email hoặc mã sinh viên!');
+      setLoginError('Vui lòng nhập email hoặc tên đăng nhập!');
+      return;
+    }
+
+    if (!loginPassword) {
+      setLoginError('Vui lòng nhập mật khẩu!');
       return;
     }
 
     const success = onLogin({
-      email: email
+      email: email,
+      password: loginPassword
     });
 
     if (!success) {
-      setLoginError('Tài khoản không tìm thấy. Vui lòng kiểm tra lại email hoặc chọn nhanh tài khoản mẫu bên dưới!');
+      setLoginError('Thông tin đăng nhập không chính xác. Vui lòng kiểm tra lại!');
     }
   };
 
   // Quick 1-click Login
   const handleQuickLogin = (email, role) => {
     setLoginEmail(email);
+    setLoginPassword('12345678');
     onLogin({
       email: email,
+      password: '12345678',
       role: role
     });
   };
 
-  // Handle Register Submit (Streamlined without password)
+  // Handle Register Submit
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     setRegError('');
@@ -71,6 +85,16 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
       return;
     }
 
+    if (regPassword.length < 6) {
+      setRegError('Mật khẩu phải có tối thiểu 6 ký tự!');
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      setRegError('Mật khẩu xác nhận không khớp!');
+      return;
+    }
+
     const faculty = FACULTIES.find(f => f.id === regFacultyId) || FACULTIES[0];
 
     onRegisterStudent({
@@ -79,7 +103,8 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
       studentCode: regStudentCode.trim() || `24D480${Math.floor(10000 + Math.random() * 90000)}`,
       className: regClass.trim() || `K22 - ${faculty.short}`,
       facultyId: faculty.id,
-      facultyName: faculty.name
+      facultyName: faculty.name,
+      password: regPassword
     });
   };
 
@@ -132,7 +157,7 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
           </button>
         </div>
 
-        {/* TAB 1: LOGIN (Password Removed) */}
+        {/* TAB 1: LOGIN */}
         {authMode === 'login' && (
           <form onSubmit={handleLoginSubmit} className="auth-form">
             {loginError && (
@@ -156,9 +181,44 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
                   onChange={(e) => setLoginEmail(e.target.value)}
                 />
               </div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Hệ thống đăng nhập trực tiếp không cần mật khẩu. Chỉ cần nhập email hoặc chọn tài khoản có sẵn bên dưới.
-              </span>
+            </div>
+
+            <div className="auth-field">
+              <label style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                Mật khẩu
+              </label>
+              <div className="auth-input-wrapper">
+                <Lock size={18} className="auth-input-icon" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  className="auth-input" 
+                  placeholder="Nhập mật khẩu"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                <button 
+                  type="button" 
+                  className="auth-toggle-pwd"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Options row - Removed the "Mật khẩu mẫu: 12345678" text as requested */}
+            <div className="auth-options" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label className="auth-remember-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.84rem' }}>
+                <input 
+                  type="checkbox" 
+                  checked={showPassword} 
+                  onChange={(e) => setShowPassword(e.target.checked)} 
+                  style={{ accentColor: 'var(--primary)' }}
+                />
+                <span>Hiển thị mật khẩu</span>
+              </label>
             </div>
 
             <button type="submit" className="btn btn-primary auth-submit-btn">
@@ -240,7 +300,7 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
           </form>
         )}
 
-        {/* TAB 2: REGISTER FOR STUDENTS (Password Removed) */}
+        {/* TAB 2: REGISTER FOR STUDENTS */}
         {authMode === 'register' && (
           <form onSubmit={handleRegisterSubmit} className="auth-form">
             {regError && (
@@ -316,6 +376,36 @@ export default function AuthPage({ onLogin, onRegisterStudent }) {
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="auth-field">
+              <label>Mật khẩu (tối thiểu 6 ký tự) <span className="required">*</span></label>
+              <div className="auth-input-wrapper">
+                <Lock size={18} className="auth-input-icon" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  className="auth-input" 
+                  placeholder="Tạo mật khẩu đăng nhập"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label>Nhập lại mật khẩu <span className="required">*</span></label>
+              <div className="auth-input-wrapper">
+                <Lock size={18} className="auth-input-icon" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  className="auth-input" 
+                  placeholder="Xác nhận lại mật khẩu"
+                  value={regConfirmPassword}
+                  onChange={(e) => setRegConfirmPassword(e.target.value)}
+                />
+              </div>
             </div>
 
             <button type="submit" className="btn btn-primary auth-submit-btn">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   User, 
+  Lock,
   Image as ImageIcon, 
   CheckCircle, 
   Save, 
@@ -17,7 +18,7 @@ import {
 import { FACULTIES, YEARS, GENDERS, UNIVERSITY_NAME } from '../data/faculties';
 
 export default function StudentProfilePage({ student, onUpdateStudent }) {
-  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'avatar'
+  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'avatar' | 'password'
   const [formData, setFormData] = useState({
     name: student.name || '',
     gender: student.gender || 'Nam',
@@ -36,6 +37,10 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
     avatar: student.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   });
 
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [pwdError, setPwdError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
   const handleChange = (field, value) => {
@@ -59,6 +64,32 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
     setTimeout(() => {
       setToastMessage('');
     }, 4000);
+  };
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    setPwdError('');
+
+    if (!currentPwd) {
+      setPwdError('Vui lòng nhập mật khẩu hiện tại!');
+      return;
+    }
+
+    if (newPwd.length < 6) {
+      setPwdError('Mật khẩu mới phải có tối thiểu 6 ký tự!');
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      setPwdError('Mật khẩu mới xác nhận không khớp!');
+      return;
+    }
+
+    setCurrentPwd('');
+    setNewPwd('');
+    setConfirmPwd('');
+    setToastMessage('Đổi mật khẩu tài khoản thành công!');
+    setTimeout(() => setToastMessage(''), 4000);
   };
 
   return (
@@ -178,6 +209,28 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
           >
             <ImageIcon size={18} />
             <span>Thay đổi avatar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('password')}
+            style={{
+              padding: '13px 22px',
+              border: 'none',
+              background: 'transparent',
+              color: activeTab === 'password' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'password' ? '800' : '600',
+              borderBottom: activeTab === 'password' ? '3px solid var(--primary)' : '3px solid transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '0.9rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Lock size={18} />
+            <span>Thay đổi mật khẩu</span>
           </button>
         </div>
 
@@ -576,6 +629,105 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Tab 3: Password Change */}
+        {activeTab === 'password' && (
+          <form onSubmit={handlePasswordChange} style={{ padding: '36px 32px', maxWidth: '520px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                background: 'var(--primary-light)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px'
+              }}>
+                <Lock size={26} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                Thiết Lập Mật Khẩu Mới
+              </h3>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Đổi mật khẩu định kỳ để bảo vệ hồ sơ và dữ liệu minh chứng Sinh viên 5 tốt của bạn.
+              </p>
+            </div>
+
+            {pwdError && (
+              <div style={{
+                background: 'var(--danger-light)',
+                color: '#991b1b',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '10px 16px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.84rem',
+                fontWeight: '600',
+                marginBottom: '18px'
+              }}>
+                {pwdError}
+              </div>
+            )}
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">
+                Mật khẩu hiện tại <span className="required">*</span>
+              </label>
+              <input 
+                type="password" 
+                className="input-control" 
+                placeholder="Nhập mật khẩu đang dùng"
+                value={currentPwd}
+                onChange={(e) => setCurrentPwd(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">
+                Mật khẩu mới <span className="required">*</span>
+              </label>
+              <input 
+                type="password" 
+                className="input-control" 
+                placeholder="Tối thiểu 6 ký tự"
+                value={newPwd}
+                onChange={(e) => setNewPwd(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label">
+                Nhập lại mật khẩu mới <span className="required">*</span>
+              </label>
+              <input 
+                type="password" 
+                className="input-control" 
+                placeholder="Xác nhận lại chính xác mật khẩu mới"
+                value={confirmPwd}
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                fontSize: '0.94rem', 
+                fontWeight: '700',
+                boxShadow: '0 4px 14px rgba(0, 91, 170, 0.3)'
+              }}
+            >
+              <Save size={18} />
+              <span>Xác nhận đổi mật khẩu</span>
+            </button>
+          </form>
         )}
       </div>
     </div>
