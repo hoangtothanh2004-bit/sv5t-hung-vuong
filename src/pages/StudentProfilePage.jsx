@@ -160,7 +160,7 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
 
       <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
         {/* Settings Sub-nav Tabs (info | avatar - removed password) */}
-        <div style={{
+        <div className="profile-sub-nav" style={{
           display: 'flex',
           background: 'var(--bg-subtle)',
           borderBottom: '1px solid var(--border-color)',
