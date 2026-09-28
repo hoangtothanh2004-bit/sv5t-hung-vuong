@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, GraduationCap, ShieldAlert, Check } from 'lucide-react';
+import { Users, GraduationCap, ShieldAlert } from 'lucide-react';
 
 export default function QuickRoleSwitch({ currentUser, onSwitchRole }) {
   return (

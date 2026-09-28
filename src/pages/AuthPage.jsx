@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   KeyRound
 } from 'lucide-react';
-import { ORG_NAME, UNIVERSITY_NAME, FACULTIES } from '../data/faculties';
+import { ORG_NAME, FACULTIES } from '../data/faculties';
 
 export default function AuthPage({ onLogin, onRegisterStudent }) {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'

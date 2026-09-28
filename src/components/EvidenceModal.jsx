@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ZoomIn, ZoomOut, RotateCw, Download, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCw, Download, CheckCircle } from 'lucide-react';
 
 export default function EvidenceModal({ evidence, student, standardName, onClose, onVerifyEvidence }) {
   const [zoom, setZoom] = useState(1);

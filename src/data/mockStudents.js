@@ -231,10 +231,13 @@ const LAST_NAMES = ['Huy', 'Trang', 'Dũng', 'Linh', 'Anh', 'Phúc', 'Phương',
 const FACULTY_POOL = [
   { id: 'ktcn', name: 'Khoa Kỹ thuật - Công nghệ', classPrefix: 'CNTT' },
   { id: 'sp', name: 'Khoa Sư phạm', classPrefix: 'SP' },
-  { id: 'ktqtkd', name: 'Khoa Kinh tế & QTKD', classPrefix: 'Kinh tế' },
-  { id: 'nln', name: 'Khoa Nông Lâm Ngư', classPrefix: 'Nông Lâm' },
+  { id: 'ktqtkd', name: 'Khoa Kinh tế & Quản trị Kinh doanh', classPrefix: 'Kinh tế' },
+  { id: 'nln', name: 'Khoa Nông - Lâm - Ngư', classPrefix: 'Nông Lâm' },
   { id: 'nn', name: 'Khoa Ngoại ngữ', classPrefix: 'Anh văn' },
-  { id: 'khxhnv', name: 'Khoa KHXH & Nhân văn', classPrefix: 'Du lịch' },
+  { id: 'khxhnv', name: 'Khoa Khoa học Xã hội & Văn hóa Du lịch', classPrefix: 'Du lịch' },
+  { id: 'khtn', name: 'Khoa Khoa học Tự nhiên', classPrefix: 'Toán tin' },
+  { id: 'nttdtt', name: 'Khoa Nghệ thuật & Thể dục Thể thao', classPrefix: 'TDTT' },
+  { id: 'llctgdtc', name: 'Khoa Chính trị & Tâm lý Giáo dục', classPrefix: 'GDCD' },
   { id: 'yduoc', name: 'Khoa Y Dược', classPrefix: 'Dược' }
 ];
 

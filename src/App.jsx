@@ -6,6 +6,7 @@ import StudentStandardsPage from './pages/StudentStandardsPage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import StudentDossierDetailModal from './pages/StudentDossierDetailModal';
+import QuickRoleSwitch from './components/QuickRoleSwitch';
 import { 
   getStoredStudents, 
   saveStudents, 
@@ -15,28 +16,16 @@ import {
 } from './utils/storage';
 
 export default function App() {
-  const [students, setStudents] = useState([]);
-  const [currentUser, setCurrentUser] = useState(getCurrentUser());
-  const [activeTab, setActiveTab] = useState('teacher_review');
+  const [students, setStudents] = useState(() => getStoredStudents());
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const [activeTab, setActiveTab] = useState(() => {
+    const user = getCurrentUser();
+    if (user?.role === 'student') return 'student_standards';
+    if (user?.role === 'admin') return 'admin_dashboard';
+    return 'teacher_review';
+  });
   const [selectedStudentForDetail, setSelectedStudentForDetail] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-
-  // Initialize data on mount
-  useEffect(() => {
-    const loadedStudents = getStoredStudents();
-    setStudents(loadedStudents);
-    
-    // Set initial active tab according to user role
-    if (currentUser) {
-      if (currentUser.role === 'teacher') {
-        setActiveTab('teacher_review');
-      } else if (currentUser.role === 'student') {
-        setActiveTab('student_standards');
-      } else if (currentUser.role === 'admin') {
-        setActiveTab('admin_dashboard');
-      }
-    }
-  }, []);
 
   // Sync dark mode class on HTML body
   useEffect(() => {
@@ -206,6 +195,44 @@ export default function App() {
     }
   };
 
+  // Quick switch role handler
+  const handleSwitchRole = (role) => {
+    if (role === 'teacher') {
+      const teacherUser = {
+        role: 'teacher',
+        name: 'ThS. Nguyễn Văn Thắng',
+        email: 'thangnv@hvu.edu.vn',
+        title: 'Phó Bí thư Đoàn trường - Trưởng ban Thẩm định SV5T'
+      };
+      setCurrentUser(teacherUser);
+      saveCurrentUser(teacherUser);
+      setActiveTab('teacher_review');
+    } else if (role === 'student') {
+      const s = students[0];
+      const studentUser = {
+        role: 'student',
+        studentId: s?.id || 'hvu-001',
+        name: s?.name || 'Lê Tuấn Thành',
+        email: s?.email || 'letuanthanh2606@gmail.com',
+        title: 'Sinh viên nộp hồ sơ',
+        avatar: s?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      };
+      setCurrentUser(studentUser);
+      saveCurrentUser(studentUser);
+      setActiveTab('student_standards');
+    } else if (role === 'admin') {
+      const adminUser = {
+        role: 'admin',
+        name: 'Đ/c Trần Quốc Tuấn',
+        email: 'doantruong@hvu.edu.vn',
+        title: 'Bí thư Đoàn Thanh niên - Chủ tịch Hội Sinh viên trường'
+      };
+      setCurrentUser(adminUser);
+      saveCurrentUser(adminUser);
+      setActiveTab('admin_dashboard');
+    }
+  };
+
   // Active student object for student view
   const activeStudent = students.find(s => s.id === (currentUser?.studentId || 'hvu-001')) || students[0];
 
@@ -289,6 +316,12 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Quick Role Switch Floating Bar */}
+      <QuickRoleSwitch 
+        currentUser={currentUser} 
+        onSwitchRole={handleSwitchRole} 
+      />
 
       {/* Detail Modal for 1 Student Dossier */}
       {selectedStudentForDetail && (

@@ -3,19 +3,9 @@ import {
   X, 
   CheckCircle, 
   AlertCircle, 
-  Award, 
-  GraduationCap, 
-  Activity, 
-  HeartHandshake, 
-  Globe, 
-  ShieldCheck, 
   Eye, 
   Save, 
-  User, 
-  Sparkles,
-  Phone,
-  Mail,
-  BookOpen
+  Sparkles
 } from 'lucide-react';
 import { STANDARDS } from '../data/criteriaData';
 import EvidenceModal from '../components/EvidenceModal';
@@ -25,7 +15,6 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
   const [activeEvidence, setActiveEvidence] = useState(null);
   const [evidenceStandardName, setEvidenceStandardName] = useState('');
   const [criteriaEdits, setCriteriaEdits] = useState({ ...student.criteriaStatus });
-  const [feedbackNote, setFeedbackNote] = useState('');
 
   if (!student) return null;
 
@@ -114,7 +103,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                 Tiến độ xét chọn
               </span>
               <div style={{ fontSize: '1.2rem', fontWeight: '900', color: isFullApproved ? 'var(--success)' : 'var(--primary)' }}>
-                {approvedCount}/5 Tiêu chuẩn Đạt
+                {approvedCount}/5 tiêu chuẩn đạt
               </div>
             </div>
             <button className="modal-close-btn" onClick={onClose}>
@@ -128,8 +117,14 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {STANDARDS.map((std, idx) => {
               const currentStatus = criteriaEdits[std.code] || { status: 'pending', note: '' };
-              const evidences = student.evidences[std.code] || [];
+              const evidences = student.evidences?.[std.code] || [];
               const isApproved = currentStatus.status === 'approved';
+
+              // Collect any explanations for this standard
+              const itemIds = [...(std.mandatoryItems || []).map(i => i.id), ...(std.additionalItems || []).map(i => i.id)];
+              const standardExplanations = Object.entries(student.explanations || {})
+                .filter(([k, v]) => itemIds.includes(k) && v && v.trim())
+                .map(([k, v]) => ({ itemId: k, text: v }));
 
               return (
                 <div 
@@ -210,6 +205,27 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                     </div>
                   </div>
 
+                  {/* Student Explanations if any */}
+                  {standardExplanations.length > 0 && (
+                    <div style={{ 
+                      background: 'var(--bg-card)', 
+                      padding: '10px 14px', 
+                      borderRadius: 'var(--radius-sm)', 
+                      border: '1px solid var(--border-color)',
+                      marginBottom: '10px',
+                      fontSize: '0.82rem'
+                    }}>
+                      <div style={{ fontWeight: '700', color: 'var(--primary)', marginBottom: '4px' }}>
+                        Giải trình của sinh viên:
+                      </div>
+                      {standardExplanations.map(exp => (
+                        <div key={exp.itemId} style={{ color: 'var(--text-main)', marginTop: '2px' }}>
+                          • <strong>Mục {exp.itemId}:</strong> {exp.text}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Evidence Items Thumbnails */}
                   <div style={{ marginBottom: '10px' }}>
                     <span style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -283,7 +299,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
               }}
             >
               <Sparkles size={15} color="var(--gold)" />
-              <span>Duyệt Đạt trọn bộ 5 tiêu chuẩn</span>
+              <span>Duyệt đạt tất cả 5 tiêu chuẩn</span>
             </button>
           </div>
 

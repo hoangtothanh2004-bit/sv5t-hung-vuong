@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, AlertCircle, Sparkles, Check, Users, ArrowRight } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Sparkles, Check, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { STANDARDS } from '../data/criteriaData';
 
@@ -11,15 +11,15 @@ export default function BatchScoringModal({
 }) {
   const [targetStandard, setTargetStandard] = useState(defaultStandard);
   const [targetStatus, setTargetStatus] = useState('approved');
-  const [note, setNote] = useState('Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc xét đợt 2025-2026');
+  const [note, setNote] = useState('Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)');
 
   const QUICK_NOTES = [
     'Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)',
-    'Đạt chuẩn Rèn luyện Xuất sắc năm học 2024-2025 (>= 90 điểm)',
-    'Đã đối soát chứng chỉ Ngoại ngữ chuẩn đầu ra hợp lệ',
-    'Hoàn thành xuất sắc Chiến dịch Tình nguyện & Hiến máu',
-    'Đạt danh hiệu Thanh niên khỏe cấp trường',
-    'Hồ sơ minh chứng đầy đủ, hợp lệ theo quy chế Đoàn trường'
+    'Đạt chuẩn rèn luyện Xuất sắc năm học (>= 90 điểm)',
+    'Đã đối soát chứng chỉ ngoại ngữ B1 hợp lệ',
+    'Hoàn thành xuất sắc hoạt động tình nguyện theo quy định',
+    'Đạt danh hiệu Sinh viên khỏe cấp trường',
+    'Hồ sơ minh chứng đầy đủ, hợp lệ theo quy chế'
   ];
 
   const handleApply = () => {
@@ -69,7 +69,7 @@ export default function BatchScoringModal({
             </div>
             <div>
               <h3 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>
-                Chấm Thẩm Định Hàng Loạt
+                Chấm thẩm định hàng loạt
               </h3>
               <p style={{ fontSize: '0.82rem', opacity: 0.9 }}>
                 Áp dụng kết quả cùng lúc cho <strong>{selectedStudents.length} sinh viên</strong> đã chọn

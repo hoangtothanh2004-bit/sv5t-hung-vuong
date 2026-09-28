@@ -5,13 +5,10 @@ import {
   CheckCircle, 
   Building, 
   Save,
-  Clock,
   Sparkles,
-  CheckCheck,
-  TrendingUp,
-  AlertCircle
+  CheckCheck
 } from 'lucide-react';
-import { FACULTIES, UNIVERSITY_NAME, ORG_NAME } from '../data/faculties';
+import { FACULTIES, UNIVERSITY_NAME } from '../data/faculties';
 import { getSystemSettings, saveSystemSettings } from '../utils/storage';
 
 export default function AdminDashboardPage({ students }) {
@@ -354,7 +351,7 @@ export default function AdminDashboardPage({ students }) {
                 Thống kê hồ sơ theo Khoa / Viện trực thuộc HVU
               </h3>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Dữ liệu cập nhật thời gian thực từ 8 Khoa đào tạo của trường
+                Dữ liệu cập nhật thời gian thực từ {FACULTIES.length} khoa đào tạo của trường
               </span>
             </div>
           </div>

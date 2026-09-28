@@ -2,27 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { 
   Users, 
   Search, 
-  Filter, 
   CheckSquare, 
   Square, 
-  CheckCircle, 
-  AlertCircle, 
+  Clock, 
   X, 
   Eye, 
-  Sparkles, 
   Award, 
-  RefreshCw,
-  GraduationCap,
-  TrendingUp,
-  FileSpreadsheet,
-  ChevronRight,
-  ShieldCheck,
-  Flame,
-  Clock,
-  Check
+  RefreshCw, 
+  GraduationCap, 
+  FileSpreadsheet, 
+  Check 
 } from 'lucide-react';
 import { FACULTIES } from '../data/faculties';
-import { STANDARDS } from '../data/criteriaData';
 import BatchScoringModal from '../components/BatchScoringModal';
 import EvidenceModal from '../components/EvidenceModal';
 
@@ -34,10 +25,8 @@ export default function TeacherReviewPage({
 }) {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [gpaFilter, setGpaFilter] = useState('all');
-  const [drlFilter, setDrlFilter] = useState('all');
   const [facultyFilter, setFacultyFilter] = useState('all');
-  const [quickPill, setQuickPill] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Selected students for batch actions
   const [selectedIds, setSelectedIds] = useState([]);
@@ -57,50 +46,33 @@ export default function TeacherReviewPage({
         const q = searchQuery.toLowerCase().trim();
         const matchName = s.name.toLowerCase().includes(q);
         const matchCode = s.studentCode.toLowerCase().includes(q);
-        const matchClass = s.className.toLowerCase().includes(q);
+        const matchClass = s.className?.toLowerCase().includes(q);
         if (!matchName && !matchCode && !matchClass) return false;
       }
 
-      // Faculty
+      // Faculty filter
       if (facultyFilter !== 'all' && s.facultyId !== facultyFilter) {
         return false;
       }
 
-      // GPA filter
-      if (gpaFilter === 'ge_3.2') {
-        if (s.gpa < 3.20) return false;
-      } else if (gpaFilter === 'ge_3.6') {
-        if (s.gpa < 3.60) return false;
-      } else if (gpaFilter === 'good_only') {
-        if (s.gpa < 3.20 || s.gpa >= 3.60) return false;
-      } else if (gpaFilter === 'fair') {
-        if (s.gpa < 2.50 || s.gpa >= 3.20) return false;
-      }
-
-      // DRL filter
-      if (drlFilter === 'ge_90') {
-        if (s.drl < 90) return false;
-      } else if (drlFilter === 'ge_80') {
-        if (s.drl < 80) return false;
-      }
-
-      // Quick pills or standard status
-      if (quickPill === 'tc2_pending') {
-        if (s.criteriaStatus.TC2.status !== 'pending') return false;
-      } else if (quickPill === 'has_english') {
-        if (!s.hasEnglishCert) return false;
-      } else if (quickPill === 'completed_5') {
+      // Status filter
+      if (statusFilter === 'full_approved') {
         const approvedCount = Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length;
         if (approvedCount < 5) return false;
-      } else if (quickPill === 'tc1_pending') {
-        if (s.criteriaStatus.TC1.status !== 'pending') return false;
+      } else if (statusFilter === 'pending') {
+        const hasPending = Object.values(s.criteriaStatus).some(c => c.status === 'pending');
+        if (!hasPending) return false;
+      } else if (statusFilter === 'good_gpa') {
+        if (s.gpa < 3.20) return false;
+      } else if (statusFilter === 'good_drl') {
+        if (s.drl < 80) return false;
       }
 
       return true;
     });
-  }, [students, searchQuery, gpaFilter, drlFilter, facultyFilter, quickPill]);
+  }, [students, searchQuery, facultyFilter, statusFilter]);
 
-  // Handle Select All currently filtered students
+  // Handle Select All
   const handleToggleSelectAll = () => {
     if (selectedIds.length === filteredStudents.length && filteredStudents.length > 0) {
       setSelectedIds([]);
@@ -131,16 +103,16 @@ export default function TeacherReviewPage({
         ['TC1', 'TC2', 'TC3', 'TC4', 'TC5'].forEach(code => {
           newCriteria[code] = {
             status,
-            note,
-            verifiedBy: 'Hội đồng HVU',
+            note: note || 'Hội đồng thẩm định phê duyệt',
+            verifiedBy: 'Hội đồng trường HVU',
             date: new Date().toISOString().split('T')[0]
           };
         });
       } else {
         newCriteria[standardCode] = {
           status,
-          note,
-          verifiedBy: 'Hội đồng HVU',
+          note: note || 'Hội đồng thẩm định phê duyệt',
+          verifiedBy: 'Hội đồng trường HVU',
           date: new Date().toISOString().split('T')[0]
         };
       }
@@ -165,11 +137,13 @@ export default function TeacherReviewPage({
   const fullPassCount = students.filter(s => {
     return Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5;
   }).length;
-  const pendingTc2Count = students.filter(s => s.criteriaStatus.TC2.status === 'pending').length;
+  const pendingCount = students.filter(s => {
+    return Object.values(s.criteriaStatus).some(c => c.status === 'pending');
+  }).length;
 
   // Export to CSV
   const handleExportCsv = () => {
-    const headers = ['Mã SV', 'Họ và tên', 'Khoa', 'Lớp', 'GPA', 'ĐRL', 'TC1 Đạo đức', 'TC2 Học tập', 'TC3 Thể lực', 'TC4 Tình nguyện', 'TC5 Hội nhập', 'Kết quả chung'];
+    const headers = ['Mã SV', 'Họ và tên', 'Khoa', 'Lớp', 'GPA', 'ĐRL', 'TC1', 'TC2', 'TC3', 'TC4', 'TC5', 'Kết quả'];
     const rows = filteredStudents.map(s => [
       s.studentCode,
       s.name,
@@ -177,12 +151,12 @@ export default function TeacherReviewPage({
       s.className,
       s.gpa,
       s.drl,
-      s.criteriaStatus.TC1.status === 'approved' ? 'Đạt' : 'Chưa',
-      s.criteriaStatus.TC2.status === 'approved' ? 'Đạt' : 'Chưa',
-      s.criteriaStatus.TC3.status === 'approved' ? 'Đạt' : 'Chưa',
-      s.criteriaStatus.TC4.status === 'approved' ? 'Đạt' : 'Chưa',
-      s.criteriaStatus.TC5.status === 'approved' ? 'Đạt' : 'Chưa',
-      Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5 ? 'ĐẠT SV5T' : 'Chưa đủ'
+      s.criteriaStatus.TC1?.status === 'approved' ? 'Đạt' : 'Chưa',
+      s.criteriaStatus.TC2?.status === 'approved' ? 'Đạt' : 'Chưa',
+      s.criteriaStatus.TC3?.status === 'approved' ? 'Đạt' : 'Chưa',
+      s.criteriaStatus.TC4?.status === 'approved' ? 'Đạt' : 'Chưa',
+      s.criteriaStatus.TC5?.status === 'approved' ? 'Đạt' : 'Chưa',
+      Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5 ? 'ĐẠT SV5T' : 'Đang xét'
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' 
@@ -191,378 +165,300 @@ export default function TeacherReviewPage({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Danh_sach_SV5T_HVU_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `Danh_sach_tham_dinh_SV5T_HVU_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="teacher-dashboard-wrap">
-      {/* Refined Executive Header Card */}
-      <div className="review-header-card">
-        <div className="review-header-title">
-          <span className="review-badge-org">Hội đồng thẩm định cấp trường • Trường Đại học Hùng Vương</span>
-          <h1>Bảng Điều Khiển Thẩm Định & Chấm Hàng Loạt</h1>
-          <p>
-            Tra cứu, kiểm tra minh chứng và <strong>đánh giá hàng loạt 1 lượt theo điều kiện lọc GPA, ĐRL và chứng chỉ</strong> cho toàn bộ sinh viên trong trường.
+    <div className="teacher-dashboard-wrap" style={{ maxWidth: '1240px', margin: '0 auto' }}>
+      
+      {/* 1. Header (Item 8: Minimal, clean, no clutter) */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '16px',
+        marginBottom: '20px'
+      }}>
+        <div>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: '800', color: 'var(--text-main)' }}>
+            Thẩm định hồ sơ
+          </h2>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Hội đồng xét chọn danh hiệu Sinh viên 5 tốt • Trường Đại học Hùng Vương
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button className="btn btn-outline" onClick={handleExportCsv} title="Xuất toàn bộ kết quả lọc ra tệp Excel">
-            <FileSpreadsheet size={16} color="var(--primary)" />
+          <button className="btn btn-outline btn-sm" onClick={handleExportCsv} title="Xuất danh sách ra tệp Excel">
+            <FileSpreadsheet size={15} color="var(--primary)" />
             <span>Xuất Excel</span>
           </button>
-          <button className="btn btn-subtle btn-sm" onClick={onResetData} title="Khôi phục lại dữ liệu 65 sinh viên mẫu ban đầu để kiểm thử">
+          <button className="btn btn-subtle btn-sm" onClick={onResetData} title="Khôi phục lại dữ liệu mẫu">
             <RefreshCw size={14} />
             <span>Đặt lại dữ liệu</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Metric Strip */}
-      <div className="stats-strip">
-        <div className="stat-item-card" style={{ borderLeft: '4px solid var(--primary)' }}>
-          <div className="stat-icon-box" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-            <Users size={22} />
+      {/* 2. Sleek Minimal Metrics Strip (Item 8: Replacing cluttered heavy cards) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '14px',
+        marginBottom: '20px'
+      }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--primary-light)',
+            color: 'var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Users size={20} />
           </div>
           <div>
-            <div className="stat-val">{totalStudents}</div>
-            <div className="stat-lbl">Hồ sơ tiếp nhận</div>
-          </div>
-        </div>
-
-        <div className="stat-item-card" style={{ borderLeft: '4px solid var(--gold)' }}>
-          <div className="stat-icon-box" style={{ background: 'var(--gold-light)', color: 'var(--gold)' }}>
-            <GraduationCap size={22} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-              <div className="stat-val">{goodGpaCount}</div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                ({Math.round((goodGpaCount / totalStudents) * 100)}%)
-              </span>
+            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.2' }}>
+              {totalStudents}
             </div>
-            <div className="stat-lbl">GPA Giỏi (≥ 3.20)</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Tổng hồ sơ tiếp nhận</div>
           </div>
         </div>
 
-        <div className="stat-item-card" style={{ borderLeft: '4px solid var(--warning)' }}>
-          <div className="stat-icon-box" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
-            <Clock size={22} />
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(245, 158, 11, 0.12)',
+            color: '#d97706',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Clock size={20} />
           </div>
           <div>
-            <div className="stat-val">{pendingTc2Count}</div>
-            <div className="stat-lbl">Chờ duyệt Học tập (TC2)</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#d97706', lineHeight: '1.2' }}>
+              {pendingCount}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Hồ sơ đang chờ thẩm định</div>
           </div>
         </div>
 
-        <div className="stat-item-card" style={{ borderLeft: '4px solid var(--success)' }}>
-          <div className="stat-icon-box" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
-            <Award size={22} />
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(16, 185, 129, 0.12)',
+            color: 'var(--success)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Award size={20} />
           </div>
           <div>
-            <div className="stat-val" style={{ color: 'var(--success)' }}>{fullPassCount}</div>
-            <div className="stat-lbl">Đạt trọn bộ 5/5 tiêu chí</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--success)', lineHeight: '1.2' }}>
+              {fullPassCount}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Đạt chuẩn 5/5 tiêu chí</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(99, 102, 241, 0.12)',
+            color: '#6366f1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <GraduationCap size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.2' }}>
+              {goodGpaCount}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>GPA Giỏi trở lên (≥ 3.20)</div>
           </div>
         </div>
       </div>
 
-      {/* Upgraded Filter Dock */}
-      <div className="filter-dock">
-        <div className="filter-row-top">
+      {/* 3. Streamlined Filter Toolbar (Item 8: Removed cluttered quick-pills) */}
+      <div className="card" style={{ padding: '16px 20px', marginBottom: '18px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '14px',
+          alignItems: 'center'
+        }}>
           {/* Keyword search */}
-          <div className="filter-input-field">
-            <label>
-              <Search size={14} /> Tìm kiếm sinh viên
-            </label>
+          <div style={{ position: 'relative' }}>
+            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="text" 
-              className="filter-text-input" 
-              placeholder="Nhập họ tên, mã sinh viên (MSSV), lớp..."
+              className="input-control" 
+              placeholder="Tìm theo họ tên, MSSV, lớp..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '36px', height: '40px' }}
             />
           </div>
 
-          {/* GPA Filter - Key User Feature */}
-          <div className="filter-input-field">
-            <label style={{ color: 'var(--primary)' }}>
-              <GraduationCap size={14} /> Lọc theo Điểm GPA:
-            </label>
-            <select 
-              className="select-control"
-              value={gpaFilter}
-              onChange={(e) => {
-                setGpaFilter(e.target.value);
-                setQuickPill('');
-              }}
-              style={{ fontWeight: gpaFilter !== 'all' ? '700' : 'normal', borderColor: gpaFilter !== 'all' ? 'var(--primary)' : 'var(--border-color)' }}
-            >
-              <option value="all">-- Tất cả mức điểm GPA --</option>
-              <option value="ge_3.2">⭐ GPA Giỏi trở lên (≥ 3.20)</option>
-              <option value="ge_3.6">🏆 GPA Xuất sắc (≥ 3.60)</option>
-              <option value="good_only">GPA Giỏi (3.20 - 3.59)</option>
-              <option value="fair">GPA Khá (2.50 - 3.19)</option>
-            </select>
-          </div>
-
-          {/* DRL Filter */}
-          <div className="filter-input-field">
-            <label>
-              <ShieldCheck size={14} /> Điểm rèn luyện:
-            </label>
-            <select 
-              className="select-control"
-              value={drlFilter}
-              onChange={(e) => {
-                setDrlFilter(e.target.value);
-                setQuickPill('');
-              }}
-            >
-              <option value="all">-- Tất cả mức ĐRL --</option>
-              <option value="ge_90">Xuất sắc (≥ 90 điểm)</option>
-              <option value="ge_80">Loại Tốt (≥ 80 điểm)</option>
-            </select>
-          </div>
-
           {/* Faculty Filter */}
-          <div className="filter-input-field">
-            <label>
-              <Filter size={14} /> Khoa / Viện:
-            </label>
+          <div>
             <select 
               className="select-control"
               value={facultyFilter}
               onChange={(e) => setFacultyFilter(e.target.value)}
+              style={{ height: '40px' }}
             >
-              <option value="all">-- Toàn trường (Tất cả Khoa) --</option>
+              <option value="all">Toàn trường (Tất cả khoa)</option>
               {FACULTIES.map(f => (
                 <option key={f.id} value={f.id}>{f.name}</option>
               ))}
             </select>
           </div>
-        </div>
 
-        {/* Quick Scenario Pills */}
-        <div className="quick-pills-row">
-          <span className="quick-pills-title">Lọc nhanh theo kịch bản:</span>
-
-          <button 
-            type="button"
-            className={`scenario-pill ${gpaFilter === 'ge_3.2' ? 'active' : ''}`}
-            onClick={() => {
-              setGpaFilter(gpaFilter === 'ge_3.2' ? 'all' : 'ge_3.2');
-              setBatchDefaultStandard('TC2');
-            }}
-          >
-            <Flame size={14} color={gpaFilter === 'ge_3.2' ? '#ffcc00' : '#f59e0b'} />
-            <span>Có {goodGpaCount} sinh viên GPA Giỏi (≥ 3.20)</span>
-          </button>
-
-          <button 
-            type="button"
-            className={`scenario-pill ${quickPill === 'tc2_pending' ? 'active' : ''}`}
-            onClick={() => {
-              setQuickPill(quickPill === 'tc2_pending' ? '' : 'tc2_pending');
-              setBatchDefaultStandard('TC2');
-            }}
-          >
-            <Clock size={14} />
-            <span>Chờ duyệt tiêu chuẩn Học tập ({pendingTc2Count})</span>
-          </button>
-
-          <button 
-            type="button"
-            className={`scenario-pill ${drlFilter === 'ge_90' ? 'active' : ''}`}
-            onClick={() => {
-              setDrlFilter(drlFilter === 'ge_90' ? 'all' : 'ge_90');
-              setBatchDefaultStandard('TC1');
-            }}
-          >
-            <Award size={14} />
-            <span>ĐRL Xuất sắc (≥ 90 điểm)</span>
-          </button>
-
-          <button 
-            type="button"
-            className={`scenario-pill ${quickPill === 'has_english' ? 'active' : ''}`}
-            onClick={() => {
-              setQuickPill(quickPill === 'has_english' ? '' : 'has_english');
-              setBatchDefaultStandard('TC5');
-            }}
-          >
-            <span>Có chứng chỉ Ngoại ngữ (IELTS/TOEIC/VSTEP)</span>
-          </button>
-
-          <button 
-            type="button"
-            className={`scenario-pill ${quickPill === 'completed_5' ? 'active' : ''}`}
-            onClick={() => setQuickPill(quickPill === 'completed_5' ? '' : 'completed_5')}
-          >
-            <Check size={14} />
-            <span>Đủ 5/5 tiêu chí ({fullPassCount})</span>
-          </button>
-
-          {(searchQuery || gpaFilter !== 'all' || drlFilter !== 'all' || facultyFilter !== 'all' || quickPill) && (
-            <button 
-              type="button"
-              className="btn btn-subtle btn-sm" 
-              onClick={() => {
-                setSearchQuery('');
-                setGpaFilter('all');
-                setDrlFilter('all');
-                setFacultyFilter('all');
-                setQuickPill('');
-              }}
-              style={{ marginLeft: 'auto' }}
+          {/* Status Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select 
+              className="select-control"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ height: '40px', flex: 1 }}
             >
-              <X size={14} />
-              <span>Xóa bộ lọc</span>
-            </button>
-          )}
+              <option value="all">Tất cả tình trạng hồ sơ</option>
+              <option value="pending">Hồ sơ có tiêu chí chờ thẩm định</option>
+              <option value="full_approved">Đã đạt đủ 5/5 tiêu chí</option>
+              <option value="good_gpa">Điểm GPA đạt loại Giỏi (≥ 3.20)</option>
+              <option value="good_drl">Điểm rèn luyện Tốt/Xuất sắc (≥ 80)</option>
+            </select>
+
+            {(searchQuery || facultyFilter !== 'all' || statusFilter !== 'all') && (
+              <button 
+                type="button"
+                className="btn btn-subtle btn-sm" 
+                onClick={() => {
+                  setSearchQuery('');
+                  setFacultyFilter('all');
+                  setStatusFilter('all');
+                }}
+                title="Xóa bộ lọc"
+                style={{ height: '40px', padding: '0 12px' }}
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Sticky Batch Action Bar (Appears when >= 1 students selected) */}
-      {selectedIds.length > 0 && (
-        <div className="batch-bar-container">
-          <div className="batch-bar">
-            <div className="batch-info">
-              <span className="batch-badge">{selectedIds.length}</span>
-              <div>
-                <strong style={{ fontSize: '0.94rem' }}>
-                  Đã chọn {selectedIds.length} / {filteredStudents.length} sinh viên phù hợp
-                </strong>
-                <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                  Áp dụng kết quả thẩm định đồng loạt 1 lượt cho toàn bộ sinh viên đã chọn
-                </p>
-              </div>
-            </div>
+      {/* 4. Table Header & Select All Controls */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{
+          padding: '12px 18px',
+          background: 'var(--bg-subtle)',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}>
+          <div style={{ fontSize: '0.86rem', color: 'var(--text-muted)' }}>
+            Danh sách hiển thị: <strong style={{ color: 'var(--text-main)' }}>{filteredStudents.length}</strong> sinh viên
+          </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <button 
-                type="button"
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  handleConfirmBatchScore({
-                    studentIds: selectedIds,
-                    standardCode: 'TC2',
-                    status: 'approved',
-                    note: 'Duyệt Đạt tự động tiêu chuẩn Học tập tốt theo GPA Giỏi/Xuất sắc'
-                  });
-                }}
-                title="Duyệt Đạt nhanh tiêu chuẩn Học tập tốt cho tất cả sinh viên được chọn"
-                style={{ fontWeight: '700' }}
-              >
-                <CheckCircle size={16} />
-                <span>Duyệt Đạt Học tập (TC2) ngay</span>
-              </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button 
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={handleToggleSelectAll}
+              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+            >
+              {selectedIds.length === filteredStudents.length && filteredStudents.length > 0 ? (
+                <>
+                  <CheckSquare size={14} color="var(--primary)" />
+                  <span>Bỏ chọn tất cả</span>
+                </>
+              ) : (
+                <>
+                  <Square size={14} />
+                  <span>Chọn tất cả ({filteredStudents.length})</span>
+                </>
+              )}
+            </button>
 
-              <button 
+            {selectedIds.length > 0 && (
+              <button
                 type="button"
-                className="btn btn-gradient btn-sm" 
+                className="btn btn-primary btn-sm"
                 onClick={() => setIsBatchModalOpen(true)}
-                style={{ fontWeight: '800', padding: '9px 20px', letterSpacing: '0.02em' }}
+                style={{ fontSize: '0.8rem', padding: '6px 14px' }}
               >
-                <Sparkles size={16} color="#ffcc00" />
-                <span>CHẤM HÀNG LOẠT TÙY CHỌN ({selectedIds.length})</span>
+                <span>Chấm điểm hàng loạt ({selectedIds.length})</span>
               </button>
-
-              <button 
-                type="button"
-                className="btn btn-outline btn-sm" 
-                style={{ borderColor: 'rgba(255,255,255,0.4)', color: '#fff' }}
-                onClick={() => setSelectedIds([])}
-              >
-                Bỏ chọn
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upgraded Table Card */}
-      <div className="table-card">
-        <div className="table-top-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.94rem', fontWeight: '800', color: 'var(--text-main)' }}>
-              Kết quả hiển thị: <strong>{filteredStudents.length} sinh viên</strong>
-            </span>
-            {gpaFilter === 'ge_3.2' && (
-              <span className="badge badge-gpa-high">
-                Đang lọc sinh viên GPA Giỏi (≥ 3.20)
-              </span>
             )}
           </div>
-
-          <button 
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={handleToggleSelectAll}
-            style={{ fontSize: '0.82rem', fontWeight: '600' }}
-          >
-            {selectedIds.length === filteredStudents.length && filteredStudents.length > 0 ? (
-              <>
-                <CheckSquare size={16} color="var(--primary)" />
-                <span>Bỏ chọn tất cả ({filteredStudents.length})</span>
-              </>
-            ) : (
-              <>
-                <Square size={16} />
-                <span>Chọn tất cả {filteredStudents.length} sinh viên này</span>
-              </>
-            )}
-          </button>
         </div>
 
-        <div className="table-container-scroll">
-          <table className="pro-table">
+        {/* 5. Minimal, Clean Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '0.86rem',
+            textAlign: 'left'
+          }}>
             <thead>
-              <tr>
-                <th className="col-cb">
+              <tr style={{
+                background: 'var(--bg-card)',
+                borderBottom: '1px solid var(--border-color)',
+                color: 'var(--text-muted)',
+                fontSize: '0.78rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.03em'
+              }}>
+                <th style={{ padding: '12px 14px', width: '40px', textAlign: 'center' }}>
                   <input 
                     type="checkbox" 
                     className="custom-checkbox"
                     checked={selectedIds.length === filteredStudents.length && filteredStudents.length > 0}
                     onChange={handleToggleSelectAll}
-                    title="Chọn tất cả"
                   />
                 </th>
-                <th className="col-student">Sinh viên & Lớp</th>
-                <th className="col-faculty">Khoa trực thuộc</th>
-                <th className="col-gpa">GPA</th>
-                <th className="col-drl">ĐRL</th>
-                <th className="col-std" title="Tiêu chuẩn 1: Đạo đức tốt">TC1</th>
-                <th className="col-std" title="Tiêu chuẩn 2: Học tập tốt">TC2</th>
-                <th className="col-std" title="Tiêu chuẩn 3: Thể lực tốt">TC3</th>
-                <th className="col-std" title="Tiêu chuẩn 4: Tình nguyện tốt">TC4</th>
-                <th className="col-std" title="Tiêu chuẩn 5: Hội nhập tốt">TC5</th>
-                <th className="col-progress">Tiến độ</th>
-                <th className="col-action">Thao tác</th>
+                <th style={{ padding: '12px 14px' }}>Sinh viên & Lớp</th>
+                <th style={{ padding: '12px 14px' }}>Khoa</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>GPA</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>ĐRL</th>
+                <th style={{ padding: '12px 10px', textAlign: 'center' }} title="Tiêu chuẩn 1: Đạo đức tốt">TC1</th>
+                <th style={{ padding: '12px 10px', textAlign: 'center' }} title="Tiêu chuẩn 2: Học tập tốt">TC2</th>
+                <th style={{ padding: '12px 10px', textAlign: 'center' }} title="Tiêu chuẩn 3: Thể lực tốt">TC3</th>
+                <th style={{ padding: '12px 10px', textAlign: 'center' }} title="Tiêu chuẩn 4: Tình nguyện tốt">TC4</th>
+                <th style={{ padding: '12px 10px', textAlign: 'center' }} title="Tiêu chuẩn 5: Hội nhập tốt">TC5</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>Tiến độ</th>
+                <th style={{ padding: '12px 14px', textAlign: 'right' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={12} style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)' }}>
-                    <Users size={36} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                    <p style={{ fontWeight: '600', fontSize: '0.94rem' }}>Không tìm thấy sinh viên nào phù hợp với bộ lọc hiện tại.</p>
-                    <button 
-                      type="button"
-                      className="btn btn-outline btn-sm" 
-                      style={{ marginTop: '12px' }}
-                      onClick={() => {
-                        setSearchQuery('');
-                        setGpaFilter('all');
-                        setDrlFilter('all');
-                        setFacultyFilter('all');
-                        setQuickPill('');
-                      }}
-                    >
-                      Xóa toàn bộ điều kiện lọc
-                    </button>
+                  <td colSpan={12} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                    <Users size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                    <p style={{ fontWeight: '600' }}>Không tìm thấy sinh viên nào phù hợp với điều kiện tìm kiếm.</p>
                   </td>
                 </tr>
               ) : (
@@ -571,10 +467,52 @@ export default function TeacherReviewPage({
                   const approvedCount = Object.values(student.criteriaStatus).filter(c => c.status === 'approved').length;
                   const isFullApproved = approvedCount === 5;
 
+                  const renderTcDot = (stdCode, title) => {
+                    const st = student.criteriaStatus?.[stdCode]?.status || 'pending';
+                    const hasEv = student.evidences?.[stdCode]?.length > 0;
+                    const isApp = st === 'approved';
+                    const isRej = st === 'rejected';
+
+                    return (
+                      <span 
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          fontSize: '0.74rem',
+                          fontWeight: '800',
+                          cursor: hasEv ? 'pointer' : 'default',
+                          background: isApp ? 'rgba(16, 185, 129, 0.15)' : (isRej ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
+                          color: isApp ? 'var(--success)' : (isRej ? 'var(--danger)' : '#d97706'),
+                          border: `1px solid ${isApp ? 'var(--success)' : (isRej ? 'var(--danger)' : '#d97706')}`
+                        }}
+                        title={`${title}: ${student.criteriaStatus?.[stdCode]?.note || (isApp ? 'Đạt' : 'Chờ duyệt')}`}
+                        onClick={() => {
+                          if (hasEv) {
+                            setActiveEvidence(student.evidences[stdCode][0]);
+                            setEvidenceStudent(student);
+                            setEvidenceStandardName(title);
+                          }
+                        }}
+                      >
+                        {isApp ? '✓' : (isRej ? '✕' : '⋯')}
+                      </span>
+                    );
+                  };
+
                   return (
-                    <tr key={student.id} className={isSelected ? 'selected-row' : ''}>
+                    <tr 
+                      key={student.id} 
+                      style={{ 
+                        borderBottom: '1px solid var(--border-color)',
+                        background: isSelected ? 'rgba(0, 91, 170, 0.05)' : 'transparent'
+                      }}
+                    >
                       {/* Checkbox */}
-                      <td className="col-cb">
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <input 
                           type="checkbox" 
                           className="custom-checkbox"
@@ -584,176 +522,77 @@ export default function TeacherReviewPage({
                       </td>
 
                       {/* Student Info */}
-                      <td className="col-student">
-                        <div className="student-meta-cell">
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img 
                             src={student.avatar} 
                             alt={student.name}
-                            className="student-avatar"
-                            style={{ borderColor: isFullApproved ? 'var(--success)' : 'var(--border-color)' }}
+                            style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
                           />
                           <div>
-                            <div className="student-name-row">
-                              <span className="student-name-text">{student.name}</span>
-                              {isFullApproved && (
-                                <Award size={14} color="#f59e0b" title="Đạt chuẩn 5/5 tiêu chí Sinh viên 5 Tốt cấp trường!" />
-                              )}
+                            <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>
+                              {student.name}
                             </div>
-                            <div className="student-sub-text">
-                              <span>{student.studentCode}</span> • <span>{student.className}</span>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                              {student.studentCode} • {student.className}
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* Faculty */}
-                      <td className="col-faculty" title={student.facultyName}>
+                      <td style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                         {student.facultyName}
                       </td>
 
                       {/* GPA */}
-                      <td className="col-gpa">
-                        <span 
-                          className={`badge ${student.gpa >= 3.6 ? 'badge-gpa-high' : (student.gpa >= 3.2 ? 'badge-gpa' : '')}`}
-                          style={{ fontSize: '0.84rem', fontWeight: '800' }}
-                        >
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <span style={{ 
+                          fontWeight: '800', 
+                          color: student.gpa >= 3.6 ? 'var(--success)' : (student.gpa >= 3.2 ? 'var(--primary)' : 'var(--text-main)') 
+                        }}>
                           {student.gpa.toFixed(2)}
                         </span>
-                        {student.gpa >= 3.6 && <div style={{ fontSize: '0.66rem', color: 'var(--success)', fontWeight: '700', marginTop: '1px' }}>Xuất sắc</div>}
-                        {student.gpa >= 3.2 && student.gpa < 3.6 && <div style={{ fontSize: '0.66rem', color: 'var(--primary)', fontWeight: '700', marginTop: '1px' }}>Loại Giỏi</div>}
                       </td>
 
                       {/* DRL */}
-                      <td className="col-drl">
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <span style={{ 
-                          fontWeight: '800', 
-                          fontSize: '0.88rem',
-                          color: student.drl >= 90 ? '#d97706' : (student.drl >= 80 ? '#059669' : 'var(--text-muted)') 
+                          fontWeight: '700',
+                          color: student.drl >= 90 ? '#d97706' : (student.drl >= 80 ? 'var(--success)' : 'var(--text-muted)')
                         }}>
                           {student.drl}
                         </span>
-                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                          {student.drl >= 90 ? 'Xuất sắc' : (student.drl >= 80 ? 'Tốt' : 'Khá')}
-                        </div>
                       </td>
 
-                      {/* TC1 Đạo đức */}
-                      <td className="col-std">
-                        <span 
-                          className={`criteria-status-dot ${student.criteriaStatus.TC1.status}`}
-                          title={`TC1 Đạo đức: ${student.criteriaStatus.TC1.note || student.criteriaStatus.TC1.status} (Click xem minh chứng)`}
-                          onClick={() => {
-                            if (student.evidences.TC1 && student.evidences.TC1.length > 0) {
-                              setActiveEvidence(student.evidences.TC1[0]);
-                              setEvidenceStudent(student);
-                              setEvidenceStandardName('Tiêu chuẩn 1: Đạo đức tốt');
-                            }
-                          }}
-                        >
-                          {student.criteriaStatus.TC1.status === 'approved' ? '✓' : (student.criteriaStatus.TC1.status === 'pending' ? '⋯' : '✗')}
+                      {/* TC1 - TC5 */}
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>{renderTcDot('TC1', 'Tiêu chuẩn 1: Đạo đức tốt')}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>{renderTcDot('TC2', 'Tiêu chuẩn 2: Học tập tốt')}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>{renderTcDot('TC3', 'Tiêu chuẩn 3: Thể lực tốt')}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>{renderTcDot('TC4', 'Tiêu chuẩn 4: Tình nguyện tốt')}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>{renderTcDot('TC5', 'Tiêu chuẩn 5: Hội nhập tốt')}</td>
+
+                      {/* Progress */}
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <span style={{ 
+                          fontSize: '0.82rem', 
+                          fontWeight: '800', 
+                          color: isFullApproved ? 'var(--success)' : 'var(--text-main)' 
+                        }}>
+                          {approvedCount}/5
                         </span>
-                      </td>
-
-                      {/* TC2 Học tập */}
-                      <td className="col-std">
-                        <span 
-                          className={`criteria-status-dot ${student.criteriaStatus.TC2.status}`}
-                          title={`TC2 Học tập: ${student.criteriaStatus.TC2.note || student.criteriaStatus.TC2.status} (Click xem bảng điểm)`}
-                          onClick={() => {
-                            if (student.evidences.TC2 && student.evidences.TC2.length > 0) {
-                              setActiveEvidence(student.evidences.TC2[0]);
-                              setEvidenceStudent(student);
-                              setEvidenceStandardName('Tiêu chuẩn 2: Học tập tốt');
-                            }
-                          }}
-                        >
-                          {student.criteriaStatus.TC2.status === 'approved' ? '✓' : (student.criteriaStatus.TC2.status === 'pending' ? '⋯' : '✗')}
-                        </span>
-                      </td>
-
-                      {/* TC3 Thể lực */}
-                      <td className="col-std">
-                        <span 
-                          className={`criteria-status-dot ${student.criteriaStatus.TC3.status}`}
-                          title={`TC3 Thể lực: ${student.criteriaStatus.TC3.note || student.criteriaStatus.TC3.status} (Click xem minh chứng)`}
-                          onClick={() => {
-                            if (student.evidences.TC3 && student.evidences.TC3.length > 0) {
-                              setActiveEvidence(student.evidences.TC3[0]);
-                              setEvidenceStudent(student);
-                              setEvidenceStandardName('Tiêu chuẩn 3: Thể lực tốt');
-                            }
-                          }}
-                        >
-                          {student.criteriaStatus.TC3.status === 'approved' ? '✓' : (student.criteriaStatus.TC3.status === 'pending' ? '⋯' : '✗')}
-                        </span>
-                      </td>
-
-                      {/* TC4 Tình nguyện */}
-                      <td className="col-std">
-                        <span 
-                          className={`criteria-status-dot ${student.criteriaStatus.TC4.status}`}
-                          title={`TC4 Tình nguyện: ${student.criteriaStatus.TC4.note || student.criteriaStatus.TC4.status} (Click xem minh chứng)`}
-                          onClick={() => {
-                            if (student.evidences.TC4 && student.evidences.TC4.length > 0) {
-                              setActiveEvidence(student.evidences.TC4[0]);
-                              setEvidenceStudent(student);
-                              setEvidenceStandardName('Tiêu chuẩn 4: Tình nguyện tốt');
-                            }
-                          }}
-                        >
-                          {student.criteriaStatus.TC4.status === 'approved' ? '✓' : (student.criteriaStatus.TC4.status === 'pending' ? '⋯' : '✗')}
-                        </span>
-                      </td>
-
-                      {/* TC5 Hội nhập */}
-                      <td className="col-std">
-                        <span 
-                          className={`criteria-status-dot ${student.criteriaStatus.TC5.status}`}
-                          title={`TC5 Hội nhập: ${student.criteriaStatus.TC5.note || student.criteriaStatus.TC5.status} (Click xem chứng chỉ)`}
-                          onClick={() => {
-                            if (student.evidences.TC5 && student.evidences.TC5.length > 0) {
-                              setActiveEvidence(student.evidences.TC5[0]);
-                              setEvidenceStudent(student);
-                              setEvidenceStandardName('Tiêu chuẩn 5: Hội nhập tốt');
-                            }
-                          }}
-                        >
-                          {student.criteriaStatus.TC5.status === 'approved' ? '✓' : (student.criteriaStatus.TC5.status === 'pending' ? '⋯' : '✗')}
-                        </span>
-                      </td>
-
-                      {/* Overall Progress Gauge */}
-                      <td className="col-progress">
-                        <div className="progress-gauge-cell">
-                          <span 
-                            className="progress-number"
-                            style={{ color: isFullApproved ? 'var(--success)' : 'var(--text-main)' }}
-                          >
-                            {approvedCount}/5
-                          </span>
-                          <div className="progress-track">
-                            <div 
-                              className="progress-bar-inner" 
-                              style={{ 
-                                width: `${(approvedCount / 5) * 100}%`,
-                                background: isFullApproved ? 'var(--success)' : 'var(--primary-gradient)'
-                              }}
-                            />
-                          </div>
-                        </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="col-action">
+                      <td style={{ padding: '12px 14px', textAlign: 'right' }}>
                         <button 
                           type="button"
                           className="btn btn-outline btn-sm"
                           onClick={() => onOpenStudentDetail(student)}
-                          style={{ gap: '4px', padding: '5px 8px', fontSize: '0.78rem', fontWeight: '700' }}
-                          title="Xem chi tiết toàn bộ hồ sơ & minh chứng"
+                          style={{ padding: '5px 12px', fontSize: '0.8rem', fontWeight: '600' }}
                         >
-                          <Eye size={13} color="var(--primary)" />
-                          <span>Chi tiết</span>
+                          <Eye size={13} />
+                          <span>Thẩm định</span>
                         </button>
                       </td>
                     </tr>
@@ -765,7 +604,67 @@ export default function TeacherReviewPage({
         </div>
       </div>
 
-      {/* Batch Action Modal Popup */}
+      {/* Sticky Quick Batch Bar */}
+      {selectedIds.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 900,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
+          padding: '12px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{ fontSize: '0.88rem' }}>
+            Đã chọn <strong style={{ color: 'var(--primary)' }}>{selectedIds.length}</strong> sinh viên
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={() => {
+                handleConfirmBatchScore({
+                  studentIds: selectedIds,
+                  standardCode: 'ALL',
+                  status: 'approved',
+                  note: 'Hội đồng xét duyệt đồng loạt đạt 5 tiêu chí'
+                });
+              }}
+            >
+              <Check size={14} />
+              <span>Duyệt đạt toàn bộ (5/5)</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setBatchDefaultStandard('TC2');
+                setIsBatchModalOpen(true);
+              }}
+            >
+              <span>Tùy chọn thẩm định...</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-subtle btn-sm"
+              onClick={() => setSelectedIds([])}
+            >
+              <span>Hủy</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Scoring Modal */}
       {isBatchModalOpen && (
         <BatchScoringModal 
           selectedStudents={selectedStudentsList}
@@ -775,27 +674,13 @@ export default function TeacherReviewPage({
         />
       )}
 
-      {/* Evidence Viewer Modal */}
+      {/* Evidence Viewer Lightbox */}
       {activeEvidence && (
         <EvidenceModal 
           evidence={activeEvidence}
           student={evidenceStudent}
           standardName={evidenceStandardName}
           onClose={() => setActiveEvidence(null)}
-          onVerifyEvidence={(evidenceId, status) => {
-            if (!evidenceStudent) return;
-            const code = evidenceStandardName.includes('Tiêu chuẩn 1') ? 'TC1' 
-              : evidenceStandardName.includes('Tiêu chuẩn 2') ? 'TC2'
-              : evidenceStandardName.includes('Tiêu chuẩn 3') ? 'TC3'
-              : evidenceStandardName.includes('Tiêu chuẩn 4') ? 'TC4' : 'TC5';
-            
-            handleConfirmBatchScore({
-              studentIds: [evidenceStudent.id],
-              standardCode: code,
-              status: 'approved',
-              note: `Minh chứng ${activeEvidence.title} đã được thẩm định đạt`
-            });
-          }}
         />
       )}
     </div>

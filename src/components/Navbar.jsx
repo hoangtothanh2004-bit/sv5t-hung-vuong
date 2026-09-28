@@ -9,7 +9,6 @@ import {
   FileText, 
   LogOut
 } from 'lucide-react';
-import { ORG_NAME, UNIVERSITY_NAME } from '../data/faculties';
 
 export default function Navbar({ 
   currentUser, 
@@ -27,18 +26,9 @@ export default function Navbar({
           
           {/* Brand & Logos */}
           <div className="brand-section">
+            {/* Brand Logos: Logo Trường và Logo Hội Sinh viên */}
             <div className="brand-logos">
-              {/* Logo Hội Sinh Viên */}
-              <div className="logo-badge" title="Hội Sinh Viên Việt Nam - HVU">
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="46" fill="#005baa" />
-                  <circle cx="50" cy="50" r="43" stroke="#ffcc00" strokeWidth="2" />
-                  <path d="M50 20 C60 20, 75 30, 75 45 C75 60, 60 70, 50 78 C40 70, 25 60, 25 45 C25 30, 40 20, 50 20 Z" fill="#ffffff" />
-                  <path d="M50 26 L55 38 L68 39 L58 48 L61 61 L50 54 L39 61 L42 48 L32 39 L45 38 Z" fill="#005baa" />
-                </svg>
-              </div>
-
-              {/* Logo HVU School badge (Desktop only) */}
+              {/* Logo Trường Đại học Hùng Vương */}
               <div className="logo-badge logo-badge-school" title="Trường Đại học Hùng Vương">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect width="100" height="100" rx="10" fill="#ffffff" />
@@ -47,23 +37,34 @@ export default function Navbar({
                   <text x="50" y="70" fontSize="10" fontWeight="bold" fill="#f59e0b" textAnchor="middle">1961</text>
                 </svg>
               </div>
+
+              {/* Logo Hội Sinh Viên */}
+              <div className="logo-badge" title="Hội Sinh viên Việt Nam - HVU">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="46" fill="#005baa" />
+                  <circle cx="50" cy="50" r="43" stroke="#ffcc00" strokeWidth="2" />
+                  <path d="M50 20 C60 20, 75 30, 75 45 C75 60, 60 70, 50 78 C40 70, 25 60, 25 45 C25 30, 40 20, 50 20 Z" fill="#ffffff" />
+                  <path d="M50 26 L55 38 L68 39 L58 48 L61 61 L50 54 L39 61 L42 48 L32 39 L45 38 Z" fill="#005baa" />
+                </svg>
+              </div>
             </div>
 
-            {/* Desktop Brand Text */}
+            {/* Brand Text: HỘI SINH VIÊN TRƯỜNG ĐẠI HỌC HÙNG VƯƠNG */}
             <div className="brand-text-desktop">
-              <span className="brand-org">{ORG_NAME}</span>
-              <span className="brand-title">XÉT CHỌN SINH VIÊN 5 TỐT</span>
-              <span className="brand-sub">Năm học 2025 - 2026 • Cấp Trường</span>
+              <span className="brand-title" style={{ fontSize: '1.05rem', letterSpacing: '0.01em' }}>
+                HỘI SINH VIÊN TRƯỜNG ĐẠI HỌC HÙNG VƯƠNG
+              </span>
             </div>
 
             {/* Mobile Compact Brand Text */}
             <div className="brand-text-mobile">
-              <span className="brand-mobile-org">ĐH HÙNG VƯƠNG</span>
-              <span className="brand-mobile-title">XÉT CHỌN SV5T</span>
+              <span className="brand-mobile-title" style={{ fontSize: '0.9rem' }}>
+                HỘI SINH VIÊN ĐH HÙNG VƯƠNG
+              </span>
             </div>
           </div>
 
-          {/* Desktop Inline Navigation Tabs (Hidden on mobile) */}
+          {/* Desktop Inline Navigation Tabs */}
           <nav className="nav-menu-desktop">
             {currentUser.role === 'teacher' && (
               <>
@@ -72,14 +73,14 @@ export default function Navbar({
                   onClick={() => setActiveTab('teacher_review')}
                 >
                   <Users size={16} />
-                  <span>Thẩm định & Chấm hàng loạt</span>
+                  <span>Thẩm định hồ sơ</span>
                 </button>
                 <button 
                   className={`nav-tab-btn ${activeTab === 'teacher_analytics' ? 'active' : ''}`}
                   onClick={() => setActiveTab('teacher_analytics')}
                 >
                   <Award size={16} />
-                  <span>Báo cáo & Thống kê Khoa</span>
+                  <span>Báo cáo thống kê</span>
                 </button>
               </>
             )}
@@ -91,14 +92,14 @@ export default function Navbar({
                   onClick={() => setActiveTab('student_standards')}
                 >
                   <GraduationCap size={16} />
-                  <span>Kê khai 5 Tiêu chuẩn</span>
+                  <span>Hồ sơ xét chọn danh hiệu</span>
                 </button>
                 <button 
                   className={`nav-tab-btn ${activeTab === 'student_profile' ? 'active' : ''}`}
                   onClick={() => setActiveTab('student_profile')}
                 >
                   <FileText size={16} />
-                  <span>Lý lịch cá nhân</span>
+                  <span>Thông tin cá nhân</span>
                 </button>
               </>
             )}
@@ -110,14 +111,14 @@ export default function Navbar({
                   onClick={() => setActiveTab('admin_dashboard')}
                 >
                   <Settings size={16} />
-                  <span>Cấu hình đợt xét chọn</span>
+                  <span>Cấu hình xét chọn</span>
                 </button>
                 <button 
                   className={`nav-tab-btn ${activeTab === 'teacher_review' ? 'active' : ''}`}
                   onClick={() => setActiveTab('teacher_review')}
                 >
                   <Users size={16} />
-                  <span>Toàn bộ danh sách</span>
+                  <span>Danh sách hồ sơ</span>
                 </button>
               </>
             )}
@@ -175,14 +176,14 @@ export default function Navbar({
                 onClick={() => setActiveTab('teacher_review')}
               >
                 <Users size={15} />
-                <span>Thẩm định & Chấm duyệt</span>
+                <span>Thẩm định hồ sơ</span>
               </button>
               <button 
                 className={`mobile-tab-pill ${activeTab === 'teacher_analytics' ? 'active' : ''}`}
                 onClick={() => setActiveTab('teacher_analytics')}
               >
                 <Award size={15} />
-                <span>Thống kê Khoa / Viện</span>
+                <span>Báo cáo thống kê</span>
               </button>
             </>
           )}
@@ -194,14 +195,14 @@ export default function Navbar({
                 onClick={() => setActiveTab('student_standards')}
               >
                 <GraduationCap size={15} />
-                <span>Kê khai 5 Tiêu chuẩn</span>
+                <span>Hồ sơ xét chọn danh hiệu</span>
               </button>
               <button 
                 className={`mobile-tab-pill ${activeTab === 'student_profile' ? 'active' : ''}`}
                 onClick={() => setActiveTab('student_profile')}
               >
                 <FileText size={15} />
-                <span>Lý lịch cá nhân</span>
+                <span>Thông tin cá nhân</span>
               </button>
             </>
           )}
