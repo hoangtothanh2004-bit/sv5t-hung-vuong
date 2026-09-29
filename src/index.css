@@ -188,7 +188,8 @@ body {
   flex-shrink: 0;
 }
 
-.logo-badge svg {
+.logo-badge svg,
+.logo-badge img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -609,9 +610,11 @@ body {
   background: #fff;
 }
 
-.auth-emblem svg {
+.auth-emblem svg,
+.auth-emblem img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .auth-brand-org {

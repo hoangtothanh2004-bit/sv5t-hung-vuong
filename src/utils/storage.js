@@ -35,26 +35,23 @@ export function resetStudentsToDefault() {
 export function getCurrentUser() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_USER);
+    if (saved === 'null') {
+      return null;
+    }
     if (saved) {
       return JSON.parse(saved);
     }
   } catch (e) {
     console.error('Error reading user from localStorage', e);
   }
-  // Mặc định ban đầu là tài khoản Giảng viên được cấp sẵn để người dùng mở trang là thấy ngay
-  const defaultUser = {
-    role: 'teacher',
-    name: 'ThS. Nguyễn Văn Thắng',
-    email: 'thangnv@hvu.edu.vn',
-    title: 'Phó Bí thư Đoàn trường - Trưởng ban Thẩm định'
-  };
-  return defaultUser;
+  // Mặc định ban đầu khi mới truy cập lần đầu
+  return null;
 }
 
 export function saveCurrentUser(user) {
   try {
     if (!user) {
-      localStorage.removeItem(STORAGE_KEY_USER);
+      localStorage.setItem(STORAGE_KEY_USER, 'null');
     } else {
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     }

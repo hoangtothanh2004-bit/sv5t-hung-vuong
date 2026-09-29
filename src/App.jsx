@@ -63,9 +63,19 @@ export default function App() {
   // Login handler
   const handleLogin = (credentials) => {
     const email = credentials.email ? credentials.email.trim().toLowerCase() : '';
+    const password = credentials.password || '';
+    const isOtp = credentials.loginType === 'otp' || credentials.isOtp;
 
-    // If logging in as teacher (pre-provisioned)
-    if (credentials.role === 'teacher' || email === 'thangnv@hvu.edu.vn' || email === 'hungtd@hvu.edu.vn' || email === 'giangvien') {
+    // 1. Teacher account
+    if (
+      credentials.role === 'teacher' || 
+      email === 'thangnv@hvu.edu.vn' || 
+      email === 'hungtd@hvu.edu.vn' || 
+      email === 'giangvien'
+    ) {
+      if (!isOtp && password && password !== '123456' && password !== '12345678') {
+        return { success: false, error: 'Mật khẩu giảng viên không chính xác (Mặc định: 123456)' };
+      }
       const teacherUser = {
         role: 'teacher',
         name: credentials.name || (email === 'hungtd@hvu.edu.vn' ? 'ThS. Trần Đình Hưng' : 'ThS. Nguyễn Văn Thắng'),
@@ -78,11 +88,19 @@ export default function App() {
       setCurrentUser(teacherUser);
       saveCurrentUser(teacherUser);
       setActiveTab('teacher_review');
-      return true;
+      return { success: true };
     }
 
-    // If logging in as admin
-    if (credentials.role === 'admin' || email === 'admin' || email === 'admin@hvu.edu.vn' || email === 'doantruong@hvu.edu.vn') {
+    // 2. Admin account
+    if (
+      credentials.role === 'admin' || 
+      email === 'admin' || 
+      email === 'admin@hvu.edu.vn' || 
+      email === 'doantruong@hvu.edu.vn'
+    ) {
+      if (!isOtp && password && password !== '123456' && password !== '12345678') {
+        return { success: false, error: 'Mật khẩu quản trị viên không chính xác (Mặc định: 123456)' };
+      }
       const adminUser = {
         role: 'admin',
         name: 'Đ/c Trần Quốc Tuấn',
@@ -92,20 +110,23 @@ export default function App() {
       };
       setCurrentUser(adminUser);
       saveCurrentUser(adminUser);
-      setActiveTab('teacher_review');
-      return true;
+      setActiveTab('admin_dashboard');
+      return { success: true };
     }
 
-    // If logging in as student - check email, student code, id, or sample accounts
+    // 3. Student accounts
     const matchedStudent = students.find(s => 
-      s.email.toLowerCase() === email ||
-      s.studentCode.toLowerCase() === email ||
-      s.id.toLowerCase() === email ||
-      email.includes('thanh') ||
-      email.includes('sinhvien')
-    ) || students[0];
+      (s.email && s.email.toLowerCase() === email) ||
+      (s.studentCode && s.studentCode.toLowerCase() === email) ||
+      (s.id && s.id.toLowerCase() === email)
+    );
 
     if (matchedStudent) {
+      const studentPass = matchedStudent.password || '123456';
+      if (!isOtp && password && password !== studentPass && password !== '12345678') {
+        return { success: false, error: 'Mật khẩu sinh viên không chính xác (Mật khẩu mặc định: 123456)' };
+      }
+
       const studentUser = {
         role: 'student',
         studentId: matchedStudent.id,
@@ -117,20 +138,90 @@ export default function App() {
       setCurrentUser(studentUser);
       saveCurrentUser(studentUser);
       setActiveTab('student_standards');
-      return true;
+      return { success: true };
     }
 
-    return false;
+    // If OTP login and email has valid format but not in initial mock, allow quick profile entry
+    if (isOtp && email.includes('@')) {
+      const newId = `hvu-${Date.now()}`;
+      const nameParts = email.split('@')[0];
+      const prettyName = nameParts.charAt(0).toUpperCase() + nameParts.slice(1);
+      const newStudent = {
+        id: newId,
+        name: prettyName,
+        studentCode: `24D480${Math.floor(10000 + Math.random() * 90000)}`,
+        email: email,
+        password: '123456',
+        gender: 'Nam',
+        dob: '01/01/2005',
+        ethnicity: 'Kinh',
+        year: 'Năm thứ 2',
+        degree: 'Đại học chính quy',
+        className: 'K22 - Đại học',
+        facultyId: 'ktcn',
+        facultyName: 'Khoa Kỹ thuật - Công nghệ',
+        position: 'Đoàn viên',
+        unionStatus: 'Đoàn viên',
+        phone: '0900000000',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        gpa: 0,
+        drl: 0,
+        hasEnglishCert: false,
+        hasResearch: false,
+        hasVolunteerCampaign: false,
+        hasBloodDonation: false,
+        hasSports: false,
+        submittedDate: new Date().toLocaleString('vi-VN'),
+        overallStatus: 'pending',
+        criteriaStatus: {
+          TC1: { status: 'pending', note: 'Chờ thẩm định rèn luyện' },
+          TC2: { status: 'pending', note: 'Chờ thẩm định học tập' },
+          TC3: { status: 'pending', note: 'Chờ thẩm định thể lực' },
+          TC4: { status: 'pending', note: 'Chờ thẩm định tình nguyện' },
+          TC5: { status: 'pending', note: 'Chờ thẩm định hội nhập' }
+        },
+        evidences: { TC1: [], TC2: [], TC3: [], TC4: [], TC5: [] }
+      };
+
+      const updatedStudents = [newStudent, ...students];
+      setStudents(updatedStudents);
+      saveStudents(updatedStudents);
+
+      const studentUser = {
+        role: 'student',
+        studentId: newStudent.id,
+        name: newStudent.name,
+        email: newStudent.email,
+        title: 'Sinh viên nộp hồ sơ',
+        avatar: newStudent.avatar
+      };
+      setCurrentUser(studentUser);
+      saveCurrentUser(studentUser);
+      setActiveTab('student_standards');
+      return { success: true };
+    }
+
+    return { 
+      success: false, 
+      error: 'Thông tin đăng nhập không chính xác hoặc tài khoản chưa đăng ký trên hệ thống. Vui lòng kiểm tra lại email/mật khẩu hoặc chuyển sang tab Đăng ký!' 
+    };
   };
 
   // Register student handler
   const handleRegisterStudent = (newInfo) => {
+    const emailLower = newInfo.email.trim().toLowerCase();
+    const existing = students.find(s => s.email.toLowerCase() === emailLower);
+    if (existing) {
+      return { success: false, error: 'Email này đã tồn tại trên hệ thống. Vui lòng đăng nhập bằng mật khẩu hoặc mã OTP!' };
+    }
+
     const newId = `hvu-${Date.now()}`;
     const newStudent = {
       id: newId,
       name: newInfo.name,
       studentCode: newInfo.studentCode,
-      email: newInfo.email,
+      email: emailLower,
+      password: newInfo.password || '123456',
       gender: 'Nam',
       dob: '01/01/2005',
       ethnicity: 'Kinh',
@@ -234,7 +325,7 @@ export default function App() {
   };
 
   // Active student object for student view
-  const activeStudent = students.find(s => s.id === (currentUser?.studentId || 'hvu-001')) || students[0];
+  const activeStudent = students.find(s => s.id === currentUser?.studentId) || students[0];
 
   // If user is not logged in, render the AuthPage (Matching video login & register)
   if (!currentUser) {
@@ -243,6 +334,7 @@ export default function App() {
         <AuthPage 
           onLogin={handleLogin}
           onRegisterStudent={handleRegisterStudent}
+          students={students}
         />
       </div>
     );

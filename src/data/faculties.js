@@ -1,14 +1,14 @@
 export const FACULTIES = [
-  { id: 'ktcn', name: 'Khoa Kỹ thuật - Công nghệ', short: 'KT-CN' },
-  { id: 'sp', name: 'Khoa Sư phạm', short: 'Sư phạm' },
-  { id: 'ktqtkd', name: 'Khoa Kinh tế & Quản trị Kinh doanh', short: 'Kinh tế & QTKD' },
-  { id: 'nln', name: 'Khoa Nông - Lâm - Ngư', short: 'Nông Lâm' },
-  { id: 'nn', name: 'Khoa Ngoại ngữ', short: 'Ngoại ngữ' },
-  { id: 'khxhnv', name: 'Khoa Khoa học Xã hội & Văn hóa Du lịch', short: 'KHXH & VHDL' },
+  { id: 'llctgdtc', name: 'Khoa Chính trị & Tâm lý giáo dục', short: 'Chính trị & TLGD' },
+  { id: 'gdthmn', name: 'Khoa Giáo dục Tiểu học & Mầm non', short: 'GDTH & MN' },
   { id: 'khtn', name: 'Khoa Khoa học Tự nhiên', short: 'KHTN' },
+  { id: 'ktqtkd', name: 'Khoa Kinh tế - QTKD', short: 'Kinh tế - QTKD' },
+  { id: 'ktcn', name: 'Khoa Kỹ thuật - Công nghệ', short: 'KT-CN' },
+  { id: 'khxhnv', name: 'Khoa Khoa học Xã hội & Văn hóa Du lịch', short: 'KHXH & VHDL' },
   { id: 'nttdtt', name: 'Khoa Nghệ thuật & Thể dục Thể thao', short: 'Nghệ thuật & TDTT' },
-  { id: 'llctgdtc', name: 'Khoa Chính trị & Tâm lý Giáo dục', short: 'Chính trị & TLGD' },
-  { id: 'yduoc', name: 'Khoa Y Dược', short: 'Y Dược' }
+  { id: 'nln', name: 'Khoa Nông - Lâm - Ngư', short: 'Nông - Lâm - Ngư' },
+  { id: 'ta', name: 'Khoa Tiếng Anh', short: 'Tiếng Anh' },
+  { id: 'ttq', name: 'Khoa Tiếng Trung Quốc', short: 'Tiếng Trung' }
 ];
 
 export const YEARS = ['Năm thứ 1', 'Năm thứ 2', 'Năm thứ 3', 'Năm thứ 4'];

@@ -9,7 +9,6 @@ import {
   Eye, 
   Award, 
   RefreshCw, 
-  GraduationCap, 
   FileSpreadsheet, 
   Check 
 } from 'lucide-react';
@@ -133,7 +132,6 @@ export default function TeacherReviewPage({
 
   // Stats calculation
   const totalStudents = students.length;
-  const goodGpaCount = students.filter(s => s.gpa >= 3.2).length;
   const fullPassCount = students.filter(s => {
     return Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5;
   }).length;
@@ -271,27 +269,6 @@ export default function TeacherReviewPage({
               {fullPassCount}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Đạt chuẩn 5/5 tiêu chí</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(99, 102, 241, 0.12)',
-            color: '#6366f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <GraduationCap size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.2' }}>
-              {goodGpaCount}
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>GPA Giỏi trở lên (≥ 3.20)</div>
           </div>
         </div>
       </div>

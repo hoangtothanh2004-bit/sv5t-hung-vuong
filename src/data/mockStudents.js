@@ -64,10 +64,10 @@ export const INITIAL_STUDENTS = [
     ethnicity: 'Kinh',
     year: 'Năm thứ 3',
     degree: 'Đại học chính quy',
-    className: 'K21 - SP Toán',
-    facultyId: 'sp',
-    facultyName: 'Khoa Sư phạm',
-    position: 'Phó Bí thư Liên chi đoàn Khoa Sư phạm',
+    className: 'K21 - GD Tiểu học',
+    facultyId: 'gdthmn',
+    facultyName: 'Khoa Giáo dục Tiểu học & Mầm non',
+    position: 'Phó Bí thư Liên chi đoàn Khoa GDTH & MN',
     unionStatus: 'Đoàn viên ưu tú',
     phone: '0978123456',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
@@ -229,16 +229,16 @@ const MIDDLE_NAMES = ['Văn', 'Thị', 'Đình', 'Hữu', 'Ngọc', 'Xuân', 'Đ
 const LAST_NAMES = ['Huy', 'Trang', 'Dũng', 'Linh', 'Anh', 'Phúc', 'Phương', 'Bình', 'Hằng', 'Tùng', 'Hoa', 'Nam', 'Quân', 'Khánh', 'Duy', 'Nhi', 'Hương', 'Thảo', 'Khoa', 'Tâm'];
 
 const FACULTY_POOL = [
+  { id: 'llctgdtc', name: 'Khoa Chính trị & Tâm lý giáo dục', classPrefix: 'TLGD' },
+  { id: 'gdthmn', name: 'Khoa Giáo dục Tiểu học & Mầm non', classPrefix: 'GDTH' },
+  { id: 'khtn', name: 'Khoa Khoa học Tự nhiên', classPrefix: 'KHTN' },
+  { id: 'ktqtkd', name: 'Khoa Kinh tế - QTKD', classPrefix: 'Kinh tế' },
   { id: 'ktcn', name: 'Khoa Kỹ thuật - Công nghệ', classPrefix: 'CNTT' },
-  { id: 'sp', name: 'Khoa Sư phạm', classPrefix: 'SP' },
-  { id: 'ktqtkd', name: 'Khoa Kinh tế & Quản trị Kinh doanh', classPrefix: 'Kinh tế' },
-  { id: 'nln', name: 'Khoa Nông - Lâm - Ngư', classPrefix: 'Nông Lâm' },
-  { id: 'nn', name: 'Khoa Ngoại ngữ', classPrefix: 'Anh văn' },
   { id: 'khxhnv', name: 'Khoa Khoa học Xã hội & Văn hóa Du lịch', classPrefix: 'Du lịch' },
-  { id: 'khtn', name: 'Khoa Khoa học Tự nhiên', classPrefix: 'Toán tin' },
   { id: 'nttdtt', name: 'Khoa Nghệ thuật & Thể dục Thể thao', classPrefix: 'TDTT' },
-  { id: 'llctgdtc', name: 'Khoa Chính trị & Tâm lý Giáo dục', classPrefix: 'GDCD' },
-  { id: 'yduoc', name: 'Khoa Y Dược', classPrefix: 'Dược' }
+  { id: 'nln', name: 'Khoa Nông - Lâm - Ngư', classPrefix: 'Nông Lâm' },
+  { id: 'ta', name: 'Khoa Tiếng Anh', classPrefix: 'Ngôn ngữ Anh' },
+  { id: 'ttq', name: 'Khoa Tiếng Trung Quốc', classPrefix: 'Ngôn ngữ Trung' }
 ];
 
 export function generateFullStudentList() {

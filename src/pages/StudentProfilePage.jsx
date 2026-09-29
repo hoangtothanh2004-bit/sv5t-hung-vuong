@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   User, 
   Image as ImageIcon, 
   CheckCircle, 
-  Save
+  Save,
+  Upload
 } from 'lucide-react';
 import { FACULTIES, YEARS, GENDERS, PARTY_MEMBER_OPTIONS } from '../data/faculties';
 
 export default function StudentProfilePage({ student, onUpdateStudent }) {
   const [activeTab, setActiveTab] = useState('info'); // 'info' | 'avatar'
+  const avatarInputRef = useRef(null);
 
   // Parse party membership from existing data
   const initialIsPartyMember = (student.unionStatus && student.unionStatus.toLowerCase().includes('đảng')) ? 'Có' : (student.isPartyMember || 'Không');
@@ -391,14 +393,44 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
             <h3 style={{ fontSize: '1.05rem', fontWeight: '700', marginBottom: '16px' }}>
               Ảnh đại diện sinh viên
             </h3>
+            
+            <input 
+              type="file" 
+              ref={avatarInputRef} 
+              accept="image/*" 
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    handleChange('avatar', ev.target.result);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
               <img 
                 src={formData.avatar} 
                 alt="Avatar" 
-                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
+                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)', boxShadow: 'var(--shadow-sm)' }}
               />
               <div style={{ flex: 1, minWidth: '240px' }}>
-                <label className="form-label">Đường dẫn ảnh đại diện (URL)</label>
+                <div style={{ marginBottom: '12px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => avatarInputRef.current?.click()}
+                    style={{ gap: '6px' }}
+                  >
+                    <Upload size={15} />
+                    <span>Chọn ảnh chân dung từ thiết bị</span>
+                  </button>
+                </div>
+
+                <label className="form-label">Hoặc nhập đường dẫn ảnh (URL)</label>
                 <input 
                   type="text" 
                   className="input-control" 
@@ -416,10 +448,11 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
                     onClick={() => {
                       const updated = { ...student, avatar: formData.avatar };
                       onUpdateStudent(updated);
-                      setToastMessage('Đã cập nhật ảnh đại diện!');
+                      setToastMessage('Đã cập nhật ảnh đại diện thành công!');
                       setTimeout(() => setToastMessage(''), 3000);
                     }}
                   >
+                    <Save size={15} />
                     <span>Lưu ảnh đại diện</span>
                   </button>
                 </div>

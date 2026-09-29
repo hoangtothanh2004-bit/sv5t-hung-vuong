@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Calendar, 
-  Sliders, 
   CheckCircle, 
   Building, 
   Save,
-  Sparkles,
   CheckCheck
 } from 'lucide-react';
 import { FACULTIES, UNIVERSITY_NAME } from '../data/faculties';
@@ -28,19 +26,19 @@ export default function AdminDashboardPage({ students }) {
     const passed = facultyStudents.filter(s => {
       return Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5;
     }).length;
-    const goodGpa = facultyStudents.filter(s => s.gpa >= (settings.minGpaGood || 3.2)).length;
+    const pending = facultyStudents.filter(s => s.overallStatus === 'pending').length;
 
     return {
       ...f,
       total: facultyStudents.length,
       passed,
-      goodGpa,
+      pending,
       passRate: facultyStudents.length > 0 ? Math.round((passed / facultyStudents.length) * 100) : 0
     };
   });
 
   const totalApplications = students.length;
-  const totalGoodGpa = students.filter(s => s.gpa >= (settings.minGpaGood || 3.2)).length;
+  const totalPending = students.filter(s => s.overallStatus === 'pending').length;
   const totalPassed = students.filter(s => {
     return Object.values(s.criteriaStatus).filter(c => c.status === 'approved').length === 5;
   }).length;
@@ -223,102 +221,6 @@ export default function AdminDashboardPage({ students }) {
             </button>
           </form>
         </div>
-
-        {/* Card 2: Batch Review Thresholds */}
-        <div className="card">
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            marginBottom: '20px', 
-            borderBottom: '1px solid var(--border-color)', 
-            paddingBottom: '14px' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'rgba(245, 158, 11, 0.14)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#d97706'
-              }}>
-                <Sliders size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>Ngưỡng điểm tự động chấm hàng loạt</h3>
-                <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Thiết lập tiêu chuẩn duyệt tức thời</span>
-              </div>
-            </div>
-          </div>
-
-          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: 1.5 }}>
-            Quy định các ngưỡng điểm GPA và Điểm rèn luyện để Hội đồng thẩm định lọc và chấm duyệt tự động một loạt sinh viên đạt chuẩn.
-          </p>
-
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Ngưỡng GPA Xuất sắc tối thiểu:</label>
-            <div className="input-group">
-              <input 
-                type="number" 
-                step="0.05"
-                className="input-control" 
-                value={settings.minGpaVeryGood}
-                onChange={(e) => setSettings({ ...settings, minGpaVeryGood: parseFloat(e.target.value) })}
-              />
-              <span className="input-addon">/ 4.0</span>
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Ngưỡng GPA Giỏi tối thiểu:</label>
-            <div className="input-group">
-              <input 
-                type="number" 
-                step="0.05"
-                className="input-control" 
-                value={settings.minGpaGood}
-                onChange={(e) => setSettings({ ...settings, minGpaGood: parseFloat(e.target.value) })}
-              />
-              <span className="input-addon">/ 4.0</span>
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '22px' }}>
-            <label className="form-label">Điểm rèn luyện tối thiểu (Loại Tốt):</label>
-            <div className="input-group">
-              <input 
-                type="number" 
-                className="input-control" 
-                value={settings.minDrlGood}
-                onChange={(e) => setSettings({ ...settings, minDrlGood: parseInt(e.target.value) })}
-              />
-              <span className="input-addon">điểm / 100</span>
-            </div>
-          </div>
-
-          <div style={{
-            background: 'rgba(245, 158, 11, 0.08)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px 16px',
-            fontSize: '0.84rem',
-            color: '#92400e',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px'
-          }}>
-            <Sparkles size={18} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong>Gợi ý thông minh cho Giảng viên:</strong>
-              <div style={{ marginTop: '2px', color: 'var(--text-muted)' }}>
-                Khi giảng viên chọn bộ lọc <em>"GPA Giỏi trở lên (≥ {settings.minGpaGood})"</em>, hệ thống sẽ trích xuất tức thời <strong>{totalGoodGpa} sinh viên</strong> và cho phép chấm duyệt 1 lượt!
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Card 3: Statistics Table by Faculty */}
@@ -356,7 +258,21 @@ export default function AdminDashboardPage({ students }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#fef3c7',
+              color: '#92400e',
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.86rem',
+              fontWeight: '800'
+            }}>
+              <span>Chờ thẩm định: {totalPending}</span>
+            </span>
+
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -370,7 +286,7 @@ export default function AdminDashboardPage({ students }) {
               boxShadow: '0 2px 6px rgba(21, 128, 61, 0.15)'
             }}>
               <CheckCheck size={16} />
-              <span>Tổng đạt chuẩn SV5T: {totalPassed} sinh viên</span>
+              <span>Tổng đạt chuẩn: {totalPassed}</span>
             </span>
           </div>
         </div>
@@ -382,7 +298,7 @@ export default function AdminDashboardPage({ students }) {
                 <th style={{ width: '60px', textAlign: 'center' }}>STT</th>
                 <th>Khoa / Viện Trực Thuộc</th>
                 <th style={{ textAlign: 'center' }}>Tổng hồ sơ nộp</th>
-                <th style={{ textAlign: 'center' }}>Hồ sơ GPA Giỏi (≥ {settings.minGpaGood})</th>
+                <th style={{ textAlign: 'center' }}>Hồ sơ đang chờ thẩm định</th>
                 <th style={{ textAlign: 'center' }}>Đạt đủ 5/5 tiêu chuẩn</th>
                 <th style={{ textAlign: 'center', width: '180px' }}>Tỷ lệ đạt</th>
               </tr>
@@ -415,13 +331,13 @@ export default function AdminDashboardPage({ students }) {
                     <span style={{
                       display: 'inline-block',
                       padding: '4px 12px',
-                      background: 'rgba(0, 91, 170, 0.1)',
-                      color: 'var(--primary)',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#d97706',
                       borderRadius: 'var(--radius-full)',
                       fontWeight: '700',
                       fontSize: '0.88rem'
                     }}>
-                      {f.goodGpa}
+                      {f.pending}
                     </span>
                   </td>
                   <td style={{ textAlign: 'center' }}>
