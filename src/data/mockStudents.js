@@ -1,3 +1,5 @@
+import { DEFAULT_AVATAR } from '../utils/avatar';
+
 export const INITIAL_STUDENTS = [
   {
     id: 'hvu-001',
@@ -15,7 +17,7 @@ export const INITIAL_STUDENTS = [
     position: 'Bí thư Chi đoàn K21 CNTT',
     unionStatus: 'Đảng viên dự bị',
     phone: '0983456832',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    avatar: DEFAULT_AVATAR,
     gpa: 3.68,
     drl: 94,
     hasEnglishCert: true,
@@ -70,7 +72,7 @@ export const INITIAL_STUDENTS = [
     position: 'Phó Bí thư Liên chi đoàn Khoa GDTH & MN',
     unionStatus: 'Đoàn viên ưu tú',
     phone: '0978123456',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    avatar: DEFAULT_AVATAR,
     gpa: 3.75,
     drl: 96,
     hasEnglishCert: true,
@@ -112,7 +114,7 @@ export const INITIAL_STUDENTS = [
     position: 'Ủy viên BCH Hội Sinh viên trường',
     unionStatus: 'Đảng viên chính thức',
     phone: '0912345678',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar: DEFAULT_AVATAR,
     gpa: 3.42,
     drl: 92,
     hasEnglishCert: true,
@@ -154,7 +156,7 @@ export const INITIAL_STUDENTS = [
     position: 'Bí thư Chi đoàn K22 Thú y',
     unionStatus: 'Đoàn viên',
     phone: '0965888999',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    avatar: DEFAULT_AVATAR,
     gpa: 3.35,
     drl: 88,
     hasEnglishCert: false,
@@ -195,7 +197,7 @@ export const INITIAL_STUDENTS = [
     position: 'Chủ nhiệm CLB Tiếng Anh HVU',
     unionStatus: 'Đoàn viên ưu tú',
     phone: '0943222111',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    avatar: DEFAULT_AVATAR,
     gpa: 3.82,
     drl: 95,
     hasEnglishCert: true,
@@ -282,9 +284,7 @@ export function generateFullStudentList() {
       position: i % 4 === 0 ? 'Bí thư Chi đoàn' : (i % 6 === 0 ? 'Lớp trưởng' : 'Đoàn viên'),
       unionStatus: i % 8 === 0 ? 'Đảng viên' : (i % 3 === 0 ? 'Đoàn viên ưu tú' : 'Đoàn viên'),
       phone: `09${(80000000 + i * 1432).toString().slice(0, 8)}`,
-      avatar: isMale 
-        ? `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`
-        : `https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80`,
+      avatar: DEFAULT_AVATAR,
       gpa,
       drl,
       hasEnglishCert: hasEnglish,

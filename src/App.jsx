@@ -7,6 +7,8 @@ import StudentProfilePage from './pages/StudentProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import StudentDossierDetailModal from './pages/StudentDossierDetailModal';
 import QuickRoleSwitch from './components/QuickRoleSwitch';
+import SyncModal from './components/SyncModal';
+import { DEFAULT_AVATAR } from './utils/avatar';
 import { 
   getStoredStudents, 
   saveStudents, 
@@ -18,6 +20,7 @@ import {
 export default function App() {
   const [students, setStudents] = useState(() => getStoredStudents());
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const user = getCurrentUser();
     if (user?.role === 'student') return 'student_standards';
@@ -203,7 +206,7 @@ export default function App() {
 
     return { 
       success: false, 
-      error: 'Thông tin đăng nhập không chính xác hoặc tài khoản chưa đăng ký trên hệ thống. Vui lòng kiểm tra lại email/mật khẩu hoặc chuyển sang tab Đăng ký!' 
+      error: 'Thông tin đăng nhập không chính xác hoặc tài khoản chưa có trên thiết bị này. Nếu bạn vừa tạo tài khoản trên máy khác, vui lòng sang tab Đăng ký để kích hoạt trên thiết bị này hoặc bấm nút Đồng bộ!' 
     };
   };
 
@@ -212,7 +215,7 @@ export default function App() {
     const emailLower = newInfo.email.trim().toLowerCase();
     const existing = students.find(s => s.email.toLowerCase() === emailLower);
     if (existing) {
-      return { success: false, error: 'Email này đã tồn tại trên hệ thống. Vui lòng đăng nhập bằng mật khẩu hoặc mã OTP!' };
+      return { success: false, error: 'Email này đã tồn tại trên hệ thống. Vui lòng đăng nhập bằng mật khẩu!' };
     }
 
     const newId = `hvu-${Date.now()}`;
@@ -233,7 +236,7 @@ export default function App() {
       position: 'Đoàn viên',
       unionStatus: 'Đoàn viên',
       phone: '0900000000',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: DEFAULT_AVATAR,
       gpa: 3.45,
       drl: 88,
       hasEnglishCert: false,
@@ -350,6 +353,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+        onOpenSync={() => setShowSyncModal(true)}
       />
 
       {/* Main View Container - STRICTLY ISOLATED BY ROLE */}
@@ -421,6 +425,14 @@ export default function App() {
           student={selectedStudentForDetail}
           onClose={() => setSelectedStudentForDetail(null)}
           onUpdateStudent={handleUpdateSingleStudent}
+        />
+      )}
+
+      {/* Cross-Device Sync Modal */}
+      {showSyncModal && (
+        <SyncModal 
+          onClose={() => setShowSyncModal(false)}
+          onDataSynced={() => setStudents(getStoredStudents())}
         />
       )}
     </div>

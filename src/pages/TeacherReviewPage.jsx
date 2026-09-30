@@ -15,6 +15,7 @@ import {
 import { FACULTIES } from '../data/faculties';
 import BatchScoringModal from '../components/BatchScoringModal';
 import EvidenceModal from '../components/EvidenceModal';
+import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function TeacherReviewPage({ 
   students, 
@@ -502,7 +503,7 @@ export default function TeacherReviewPage({
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img 
-                            src={student.avatar} 
+                            src={student.avatar || DEFAULT_AVATAR} 
                             alt={student.name}
                             style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
                           />

@@ -7,6 +7,7 @@ import {
   Upload
 } from 'lucide-react';
 import { FACULTIES, YEARS, GENDERS, PARTY_MEMBER_OPTIONS } from '../data/faculties';
+import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function StudentProfilePage({ student, onUpdateStudent }) {
   const [activeTab, setActiveTab] = useState('info'); // 'info' | 'avatar'
@@ -27,7 +28,7 @@ export default function StudentProfilePage({ student, onUpdateStudent }) {
     isPartyMember: initialIsPartyMember,
     phone: student.phone || '',
     email: student.email || '',
-    avatar: student.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    avatar: student.avatar || DEFAULT_AVATAR
   });
 
   const [toastMessage, setToastMessage] = useState('');

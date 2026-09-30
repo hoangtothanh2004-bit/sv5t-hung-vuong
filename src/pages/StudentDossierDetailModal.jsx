@@ -10,6 +10,7 @@ import {
 import { STANDARDS } from '../data/criteriaData';
 import EvidenceModal from '../components/EvidenceModal';
 import confetti from 'canvas-confetti';
+import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function StudentDossierDetailModal({ student, onClose, onUpdateStudent }) {
   const [activeEvidence, setActiveEvidence] = useState(null);
@@ -77,7 +78,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
         <div className="modal-header" style={{ background: 'var(--bg-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <img 
-              src={student.avatar} 
+              src={student.avatar || DEFAULT_AVATAR} 
               alt={student.name}
               style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
             />

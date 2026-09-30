@@ -7,11 +7,13 @@ import {
   Moon, 
   Sun, 
   FileText, 
-  LogOut
+  LogOut,
+  RefreshCw
 } from 'lucide-react';
 
 import logoTruong from '../assets/logo-truong.png';
 import logoHoiSinhVien from '../assets/logo-hoisinhvien.png';
+import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function Navbar({ 
   currentUser, 
@@ -19,7 +21,8 @@ export default function Navbar({
   activeTab, 
   setActiveTab, 
   darkMode, 
-  setDarkMode
+  setDarkMode,
+  onOpenSync
 }) {
   return (
     <header className="navbar">
@@ -128,6 +131,18 @@ export default function Navbar({
               {darkMode ? <Sun size={17} color="#f59e0b" /> : <Moon size={17} color="#005baa" />}
             </button>
 
+            {/* Quick device sync button */}
+            {onOpenSync && (
+              <button 
+                className="btn-theme-toggle" 
+                onClick={onOpenSync}
+                title="Đồng bộ dữ liệu thiết bị (Chuyển giữa Máy tính - Điện thoại)"
+                style={{ color: 'var(--primary)' }}
+              >
+                <RefreshCw size={16} />
+              </button>
+            )}
+
             {/* User profile info */}
             <div className="user-profile-wrap">
               <div className="user-text-box">
@@ -142,7 +157,7 @@ export default function Navbar({
               </div>
 
               <img 
-                src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80'} 
+                src={currentUser.avatar || DEFAULT_AVATAR} 
                 alt="Avatar"
                 className="user-avatar-badge"
               />

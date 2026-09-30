@@ -14,19 +14,23 @@ import {
   FileText,
   Image as ImageIcon,
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  Save
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { STANDARDS, CATEGORIES, COLLECTIVE_STANDARDS, STAR_JAN_STANDARDS } from '../data/criteriaData';
 import EvidenceModal from '../components/EvidenceModal';
+import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function StudentStandardsPage({ student, onUpdateStudent }) {
   const [selectedCategory, setSelectedCategory] = useState('sv5t');
   const [activeModalItem, setActiveModalItem] = useState(null);
   const [evidenceContent, setEvidenceContent] = useState('');
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [previewEvidence, setPreviewEvidence] = useState(null);
   const [explanations, setExplanations] = useState(student.explanations || {});
   const [isDragging, setIsDragging] = useState(false);
+  const [submissionSuccessBanner, setSubmissionSuccessBanner] = useState(false);
   const fileInputRef = useRef(null);
 
   if (!student) return null;
@@ -46,7 +50,7 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
   const handleOpenAddModal = (std, item) => {
     setActiveModalItem({ std, item });
     setEvidenceContent(explanations[item.id] || '');
-    setUploadedFile(null);
+    setUploadedFiles([]);
   };
 
   const handleExplanationChange = (itemId, text) => {
@@ -63,34 +67,42 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
     onUpdateStudent(updatedStudent);
   };
 
-  const processSelectedFile = (file) => {
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      alert('Tệp quá lớn. Vui lòng chọn tệp dung lượng dưới 20MB!');
-      return;
-    }
+  const processSelectedFiles = (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const filesArray = Array.from(fileList);
+    
+    filesArray.forEach((file, index) => {
+      if (file.size > 20 * 1024 * 1024) {
+        alert(`Tệp "${file.name}" vượt quá 20MB. Vui lòng chọn tệp nhỏ hơn!`);
+        return;
+      }
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const sizeStr = file.size > 1024 * 1024 
-      ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
-      : Math.round(file.size / 1024) + ' KB';
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const sizeStr = file.size > 1024 * 1024 
+        ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+        : Math.round(file.size / 1024) + ' KB';
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setUploadedFile({
-        name: file.name,
-        size: sizeStr,
-        type: isPdf ? 'pdf' : 'image',
-        preview: e.target.result // Base64 data URL
-      });
-    };
-    reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedFiles(prev => [
+          ...prev,
+          {
+            id: `up-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 6)}`,
+            name: file.name,
+            size: sizeStr,
+            type: isPdf ? 'pdf' : 'image',
+            preview: e.target.result // Base64 data URL
+          }
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      processSelectedFile(file);
+    if (e.target.files && e.target.files.length > 0) {
+      processSelectedFiles(e.target.files);
+      e.target.value = ''; // Reset to allow re-selecting same file
     }
   };
 
@@ -107,10 +119,13 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      processSelectedFile(file);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFiles(e.dataTransfer.files);
     }
+  };
+
+  const handleRemoveUploadedFile = (fileId) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   const handleSubmitEvidence = (e) => {
@@ -120,16 +135,34 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
     const stdCode = activeModalItem.std.code;
     const itemId = activeModalItem.item.id;
 
-    const newEvidence = {
-      id: `ev-${Date.now()}`,
-      itemId: itemId,
-      title: activeModalItem.item.title + (evidenceContent ? `: ${evidenceContent.slice(0, 35)}` : ''),
-      url: uploadedFile?.preview || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
-      type: 'image',
-      fileName: uploadedFile?.name || 'Minh_chung_SV5T.jpg',
-      note: evidenceContent || activeModalItem.item.evidenceRequired,
-      uploadedAt: new Date().toLocaleString('vi-VN')
-    };
+    // Create an evidence object for each uploaded file (or a single entry if only explanation)
+    let newEvidences = [];
+    if (uploadedFiles.length > 0) {
+      newEvidences = uploadedFiles.map((file, idx) => ({
+        id: `ev-${Date.now()}-${idx}`,
+        itemId: itemId,
+        title: activeModalItem.item.title + (uploadedFiles.length > 1 ? ` (Tệp ${idx + 1}/${uploadedFiles.length})` : '') + (evidenceContent ? `: ${evidenceContent.slice(0, 35)}` : ''),
+        url: file.preview,
+        type: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+        note: evidenceContent || activeModalItem.item.evidenceRequired,
+        uploadedAt: new Date().toLocaleString('vi-VN')
+      }));
+    } else if (evidenceContent.trim()) {
+      newEvidences = [{
+        id: `ev-${Date.now()}`,
+        itemId: itemId,
+        title: activeModalItem.item.title + `: ${evidenceContent.slice(0, 35)}`,
+        url: '',
+        type: 'text',
+        fileName: 'Giai_trinh_thanh_tich.txt',
+        note: evidenceContent,
+        uploadedAt: new Date().toLocaleString('vi-VN')
+      }];
+    }
+
+    if (newEvidences.length === 0) return;
 
     const existingList = student.evidences?.[stdCode] || [];
     const nextExplanations = {
@@ -142,13 +175,13 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
       explanations: nextExplanations,
       evidences: {
         ...(student.evidences || {}),
-        [stdCode]: [...existingList, newEvidence]
+        [stdCode]: [...existingList, ...newEvidences]
       },
       criteriaStatus: {
         ...(student.criteriaStatus || {}),
         [stdCode]: {
           status: 'pending',
-          note: 'Đã nộp minh chứng mới - Chờ thẩm định',
+          note: `Đã nộp ${newEvidences.length} minh chứng mới - Chờ thẩm định`,
           date: new Date().toISOString().split('T')[0]
         }
       }
@@ -156,6 +189,7 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
 
     onUpdateStudent(updatedStudent);
     setActiveModalItem(null);
+    setUploadedFiles([]);
   };
 
   const handleDeleteEvidence = (stdCode, evidenceId) => {
@@ -196,7 +230,7 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
             <img 
-              src={student.avatar} 
+              src={student.avatar || DEFAULT_AVATAR} 
               alt={student.name}
               style={{
                 width: '64px',
@@ -665,10 +699,117 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
         })}
       </div>
 
-      {/* Modal: Tải lên minh chứng mới */}
+      {/* Mục lưu dưới cuối cùng sau khi tải các minh chứng xong */}
+      <div className="card" style={{
+        marginTop: '32px',
+        padding: '28px 32px',
+        borderRadius: 'var(--radius-xl)',
+        background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 91, 170, 0.05) 100%)',
+        border: '2px solid var(--border-color)',
+        boxShadow: 'var(--shadow-md)'
+      }}>
+        {submissionSuccessBanner && (
+          <div style={{
+            background: '#ecfdf5',
+            border: '1px solid #10b981',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            animation: 'fadeIn 0.3s ease'
+          }}>
+            <CheckCircle2 size={24} color="#059669" />
+            <div>
+              <h4 style={{ margin: 0, color: '#065f46', fontSize: '0.98rem', fontWeight: '800' }}>
+                Đã lưu và nộp toàn bộ hồ sơ minh chứng thành công!
+              </h4>
+              <p style={{ margin: '2px 0 0', color: '#047857', fontSize: '0.84rem' }}>
+                Hồ sơ xét chọn Danh hiệu Sinh viên 5 tốt của bạn đã được cập nhật gửi tới Ban Thẩm định Hội Sinh viên trường.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '20px'
+        }}>
+          <div>
+            <span style={{
+              display: 'inline-block',
+              fontSize: '0.78rem',
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              color: 'var(--primary)',
+              letterSpacing: '0.06em',
+              marginBottom: '4px'
+            }}>
+              Mục Lưu Cuối Cùng • Hoàn tất hồ sơ
+            </span>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+              Lưu & Nộp toàn bộ hồ sơ xét chọn SV5T
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', margin: 0, maxWidth: '650px', lineHeight: '1.5' }}>
+              Sau khi tải và lưu tất cả các minh chứng cho các tiêu chuẩn, sinh viên bấm nút bên cạnh để hoàn tất lưu trữ và gửi hồ sơ chính thức tới Hội đồng thẩm định xét duyệt.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'right', marginRight: '4px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Tổng minh chứng đã tải:</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--primary)' }}>
+                {Object.values(student.evidences || {}).reduce((acc, curr) => acc + (curr?.length || 0), 0)} tệp
+              </div>
+            </div>
+
+            <button 
+              type="button"
+              className="btn btn-primary btn-lg"
+              onClick={() => {
+                const updatedStudent = {
+                  ...student,
+                  submittedDate: new Date().toLocaleString('vi-VN'),
+                  overallStatus: 'pending'
+                };
+                onUpdateStudent(updatedStudent);
+                setSubmissionSuccessBanner(true);
+                try {
+                  confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                  });
+                } catch {
+                  // ignore
+                }
+                setTimeout(() => setSubmissionSuccessBanner(false), 8000);
+              }}
+              style={{
+                padding: '14px 28px',
+                fontSize: '0.98rem',
+                fontWeight: '800',
+                boxShadow: 'var(--shadow-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <Save size={18} />
+              <span>LƯU & NỘP TOÀN BỘ HỒ SƠ</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal: Tải lên minh chứng mới (Cho phép nhiều tệp) */}
       {activeModalItem && (
         <div className="modal-overlay" onClick={() => setActiveModalItem(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header">
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>Tải lên minh chứng</h3>
@@ -718,18 +859,24 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
                     <span>
                       Tệp minh chứng đính kèm (Ảnh chụp/scan, bằng khen, chứng chỉ, bảng điểm) <span className="required">*</span>
                     </span>
+                    {uploadedFiles.length > 0 && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>
+                        Đã chọn {uploadedFiles.length} tệp
+                      </span>
+                    )}
                   </label>
 
-                  {/* Hidden file input */}
+                  {/* Hidden file input with multiple selection */}
                   <input 
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileInputChange}
                     accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                    multiple
                     style={{ display: 'none' }}
                   />
 
-                  {!uploadedFile ? (
+                  {uploadedFiles.length === 0 ? (
                     <div 
                       style={{
                         border: isDragging ? '2px dashed var(--primary)' : '2px dashed var(--border-color)',
@@ -763,10 +910,10 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
                         Bấm vào đây để chọn ảnh từ máy tính hoặc điện thoại
                       </p>
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                        Hoặc kéo thả ảnh chứng chỉ, giấy chứng nhận vào đây (Hỗ trợ JPG, PNG, WEBP, PDF tối đa 20MB)
+                        Hoặc kéo thả ảnh chứng chỉ, giấy chứng nhận vào đây (Hỗ trợ chọn nhiều tệp: JPG, PNG, WEBP, PDF tối đa 20MB)
                       </p>
 
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                         <button 
                           type="button" 
                           className="btn btn-primary btn-sm"
@@ -778,99 +925,92 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
                           <ImageIcon size={15} />
                           <span>Chọn ảnh minh chứng</span>
                         </button>
-
-                        <button 
-                          type="button" 
-                          className="btn btn-outline btn-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setUploadedFile({
-                              name: `Minh_chung_${activeModalItem.item.id}_HVU.jpg`,
-                              size: '340 KB',
-                              type: 'image',
-                              preview: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80'
-                            });
-                          }}
-                        >
-                          <span>Dùng ảnh mẫu nếu chưa có</span>
-                        </button>
                       </div>
                     </div>
                   ) : (
-                    /* Uploaded file preview card */
-                    <div style={{
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: '16px',
-                      background: 'var(--bg-card)',
-                      boxShadow: 'var(--shadow-xs)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        {uploadedFile.type === 'image' ? (
-                          <img 
-                            src={uploadedFile.preview} 
-                            alt="Preview" 
+                    /* Multiple Uploaded Files List */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
+                        {uploadedFiles.map((file) => (
+                          <div 
+                            key={file.id}
                             style={{
-                              width: '70px',
-                              height: '70px',
-                              borderRadius: '8px',
-                              objectFit: 'cover',
                               border: '1px solid var(--border-color)',
-                              flexShrink: 0
+                              borderRadius: 'var(--radius-md)',
+                              padding: '10px 14px',
+                              background: 'var(--bg-card)',
+                              boxShadow: 'var(--shadow-xs)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px'
                             }}
-                          />
-                        ) : (
-                          <div style={{
-                            width: '70px',
-                            height: '70px',
-                            borderRadius: '8px',
-                            background: '#fee2e2',
-                            color: '#dc2626',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            <FileText size={28} />
-                            <span style={{ fontSize: '0.68rem', fontWeight: '800', marginTop: '2px' }}>PDF</span>
-                          </div>
-                        )}
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                            <CheckCircle2 size={16} color="var(--success)" />
-                            <span style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)', wordBreak: 'break-all' }}>
-                              {uploadedFile.name}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                            Dung lượng: {uploadedFile.size || 'Hợp lệ'} • Sẵn sàng lưu vào hồ sơ
-                          </p>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
-                          <button 
-                            type="button" 
-                            className="btn btn-outline btn-sm"
-                            onClick={() => fileInputRef.current?.click()}
-                            style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-                            title="Chọn tệp khác"
                           >
-                            Đổi tệp
-                          </button>
-                          <button 
-                            type="button" 
-                            className="btn btn-outline btn-sm"
-                            onClick={() => setUploadedFile(null)}
-                            style={{ padding: '6px 10px', fontSize: '0.78rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                            title="Xóa tệp này"
-                          >
-                            <Trash2 size={13} />
-                            <span>Xóa</span>
-                          </button>
-                        </div>
+                            {file.type === 'image' ? (
+                              <img 
+                                src={file.preview} 
+                                alt={file.name} 
+                                style={{
+                                  width: '48px',
+                                  height: '48px',
+                                  borderRadius: '6px',
+                                  objectFit: 'cover',
+                                  border: '1px solid var(--border-color)',
+                                  flexShrink: 0
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '6px',
+                                background: '#fee2e2',
+                                color: '#dc2626',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                <FileText size={20} />
+                                <span style={{ fontSize: '0.62rem', fontWeight: '800', marginTop: '1px' }}>PDF</span>
+                              </div>
+                            )}
+
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                <CheckCircle2 size={15} color="var(--success)" />
+                                <span style={{ fontSize: '0.84rem', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {file.name}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
+                                Dung lượng: {file.size} • Sẵn sàng lưu
+                              </p>
+                            </div>
+
+                            <button 
+                              type="button" 
+                              className="btn btn-outline btn-sm"
+                              onClick={() => handleRemoveUploadedFile(file.id)}
+                              style={{ padding: '6px 8px', fontSize: '0.76rem', color: 'var(--danger)', borderColor: 'var(--danger)', flexShrink: 0 }}
+                              title="Xóa tệp này"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        ))}
                       </div>
+
+                      {/* Button to add more files */}
+                      <button 
+                        type="button" 
+                        className="btn btn-outline btn-sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ alignSelf: 'flex-start', marginTop: '4px', gap: '6px' }}
+                      >
+                        <Plus size={14} />
+                        <span>Chọn thêm tệp khác</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -880,8 +1020,8 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
                 <button type="button" className="btn btn-outline" onClick={() => setActiveModalItem(null)}>
                   Đóng
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={!uploadedFile && !evidenceContent}>
-                  <span>Lưu minh chứng</span>
+                <button type="submit" className="btn btn-primary" disabled={uploadedFiles.length === 0 && !evidenceContent.trim()}>
+                  <span>Lưu {uploadedFiles.length > 1 ? `${uploadedFiles.length} ` : ''}minh chứng</span>
                 </button>
               </div>
             </form>

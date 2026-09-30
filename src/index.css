@@ -183,7 +183,7 @@ body {
   background: white;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
-  padding: 4px;
+  padding: 2px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -599,10 +599,10 @@ body {
 }
 
 .auth-emblem {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   border-radius: 14px;
-  padding: 6px;
+  padding: 4px;
   box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;

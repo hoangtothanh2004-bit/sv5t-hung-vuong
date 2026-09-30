@@ -1,0 +1,2 @@
+// Default Facebook-style silhouette avatar
+export const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" fill="%23E4E6EB"/><circle cx="80" cy="58" r="28" fill="%238A8D91"/><path d="M80 94 C50 94 30 110 24 136 C22 144 28 152 36 152 L124 152 C132 152 138 144 136 136 C130 110 110 94 80 94 Z" fill="%238A8D91"/></svg>`;

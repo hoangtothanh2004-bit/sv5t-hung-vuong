@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <!-- Facebook-style default avatar background -->
+  <rect width="160" height="160" fill="#E4E6EB" />
+  <!-- Silhouette head -->
+  <circle cx="80" cy="58" r="28" fill="#8A8D91" />
+  <!-- Silhouette body / shoulders -->
+  <path d="M80 94 C50 94 30 110 24 136 C22 144 28 152 36 152 L124 152 C132 152 138 144 136 136 C130 110 110 94 80 94 Z" fill="#8A8D91" />
+</svg>
