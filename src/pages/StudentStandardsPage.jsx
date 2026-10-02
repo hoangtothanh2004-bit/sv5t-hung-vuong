@@ -229,38 +229,39 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '12px 20px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: '1 1 380px' }}>
             <img 
               src={student.avatar || DEFAULT_AVATAR} 
               alt={student.name}
               style={{
-                width: '64px',
-                height: '64px',
+                width: '62px',
+                height: '62px',
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '2.5px solid var(--primary)',
-                boxShadow: 'var(--shadow-sm)'
+                boxShadow: 'var(--shadow-sm)',
+                flexShrink: 0
               }}
             />
-            <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)' }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.2' }}>
                 {student.name}
               </h2>
-              <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                Mã sinh viên: <strong>{student.studentCode}</strong> • Lớp: <strong>{student.className}</strong> • {student.facultyName}
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.4' }}>
+                Mã sinh viên: <strong>{student.studentCode}</strong> • Lớp: <strong>{student.className}</strong> • <span style={{ color: 'var(--text-main)', fontWeight: '600' }}>{student.facultyName}</span>
               </p>
             </div>
           </div>
 
-          <div style={{ fontSize: '0.86rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-            <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700', color: 'var(--text-subtle)' }}>
-              Cơ quan xét chọn
-            </span>
-            <div style={{ marginTop: '2px' }}>
-              Hội đồng xét chọn: <strong style={{ color: 'var(--primary)' }}>Hội sinh viên trường Đại học Hùng Vương</strong>
-            </div>
+          <div style={{ 
+            fontSize: '0.84rem', 
+            color: 'var(--text-muted)', 
+            flexShrink: 0,
+            whiteSpace: 'nowrap'
+          }}>
+            Hội đồng xét chọn: <strong style={{ color: 'var(--primary)' }}>Hội sinh viên trường Đại học Hùng Vương</strong>
           </div>
         </div>
 
