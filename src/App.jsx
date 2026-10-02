@@ -14,11 +14,19 @@ import {
   saveStudents, 
   getCurrentUser, 
   saveCurrentUser,
-  resetStudentsToDefault 
+  resetStudentsToDefault,
+  getStoredCollectives,
+  saveCollectives,
+  resetCollectivesToDefault,
+  getStoredStarJan,
+  saveStarJan,
+  resetStarJanToDefault
 } from './utils/storage';
 
 export default function App() {
   const [students, setStudents] = useState(() => getStoredStudents());
+  const [collectives, setCollectives] = useState(() => getStoredCollectives());
+  const [starJanList, setStarJanList] = useState(() => getStoredStarJan());
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
@@ -27,7 +35,7 @@ export default function App() {
     if (user?.role === 'admin') return 'admin_dashboard';
     return 'teacher_review';
   });
-  const [selectedStudentForDetail, setSelectedStudentForDetail] = useState(null);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null); // { record, category }
   const [darkMode, setDarkMode] = useState(false);
 
   // Sync dark mode class on HTML body
@@ -45,21 +53,106 @@ export default function App() {
     saveStudents(newStudentsList);
   };
 
+  const handleUpdateCollectives = (newCollectives) => {
+    setCollectives(newCollectives);
+    saveCollectives(newCollectives);
+  };
+
+  const handleUpdateStarJan = (newStarJanList) => {
+    setStarJanList(newStarJanList);
+    saveStarJan(newStarJanList);
+  };
+
   // Update a single student (e.g. from student profile or criteria submission)
   const handleUpdateSingleStudent = (updatedStudent) => {
     const updatedList = students.map(s => s.id === updatedStudent.id ? updatedStudent : s);
     setStudents(updatedList);
     saveStudents(updatedList);
-    if (selectedStudentForDetail && selectedStudentForDetail.id === updatedStudent.id) {
-      setSelectedStudentForDetail(updatedStudent);
+
+    // Đồng bộ nếu sinh viên này cũng nộp trong danh sách Sao Tháng Giêng
+    const existingStg = starJanList.find(stg => stg.id === updatedStudent.id || stg.studentId === updatedStudent.id);
+    if (existingStg) {
+      const updatedStgList = starJanList.map(stg => {
+        if (stg.id === updatedStudent.id || stg.studentId === updatedStudent.id) {
+          return {
+            ...stg,
+            ...updatedStudent,
+            criteriaStatus: { ...stg.criteriaStatus, ...(updatedStudent.criteriaStatus || {}) },
+            evidences: { ...stg.evidences, ...(updatedStudent.evidences || {}) },
+            explanations: { ...stg.explanations, ...(updatedStudent.explanations || {}) }
+          };
+        }
+        return stg;
+      });
+      setStarJanList(updatedStgList);
+      saveStarJan(updatedStgList);
+    }
+
+    // Đồng bộ nếu sinh viên cập nhật tiêu chí tập thể của lớp
+    const existingCollective = collectives.find(c => c.className === updatedStudent.className);
+    if (existingCollective) {
+      const ttCodes = ['TT1', 'TT2', 'TT3'];
+      const hasTtUpdate = ttCodes.some(code => updatedStudent.criteriaStatus?.[code] || updatedStudent.evidences?.[code]);
+      if (hasTtUpdate) {
+        const updatedCollectives = collectives.map(c => {
+          if (c.className === updatedStudent.className) {
+            const newCStatus = { ...c.criteriaStatus };
+            const newCEv = { ...c.evidences };
+            ttCodes.forEach(code => {
+              if (updatedStudent.criteriaStatus?.[code]) newCStatus[code] = updatedStudent.criteriaStatus[code];
+              if (updatedStudent.evidences?.[code]) newCEv[code] = updatedStudent.evidences[code];
+            });
+            return { ...c, criteriaStatus: newCStatus, evidences: newCEv };
+          }
+          return c;
+        });
+        setCollectives(updatedCollectives);
+        saveCollectives(updatedCollectives);
+      }
+    }
+
+    if (selectedDetailItem && selectedDetailItem.record?.id === updatedStudent.id) {
+      setSelectedDetailItem(prev => ({ ...prev, record: updatedStudent }));
+    }
+  };
+
+  // Generic updater when review modal saves
+  const handleUpdateRecordFromModal = (updatedRecord, category) => {
+    if (category === 'tt5t') {
+      const nextList = collectives.map(c => c.id === updatedRecord.id ? updatedRecord : c);
+      setCollectives(nextList);
+      saveCollectives(nextList);
+    } else if (category === 'stg') {
+      const nextList = starJanList.map(s => s.id === updatedRecord.id ? updatedRecord : s);
+      setStarJanList(nextList);
+      saveStarJan(nextList);
+
+      // Cập nhật chéo sang student nếu có cùng studentId
+      const matched = students.find(s => s.id === updatedRecord.studentId || s.id === updatedRecord.id);
+      if (matched) {
+        handleUpdateSingleStudent({
+          ...matched,
+          criteriaStatus: { ...matched.criteriaStatus, ...updatedRecord.criteriaStatus }
+        });
+      }
+    } else {
+      handleUpdateSingleStudent(updatedRecord);
+    }
+
+    if (selectedDetailItem && selectedDetailItem.record?.id === updatedRecord.id) {
+      setSelectedDetailItem(prev => ({ ...prev, record: updatedRecord }));
     }
   };
 
   // Reset data to defaults
   const handleResetData = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đặt lại dữ liệu hơn 65 sinh viên mẫu ban đầu không?')) {
-      const fresh = resetStudentsToDefault();
-      setStudents(fresh);
+    if (window.confirm('Bạn có chắc chắn muốn đặt lại dữ liệu mẫu của cả 3 danh mục xét chọn ban đầu không?')) {
+      const freshStudents = resetStudentsToDefault();
+      setStudents(freshStudents);
+      const freshCollectives = resetCollectivesToDefault();
+      setCollectives(freshCollectives);
+      const freshStarJan = resetStarJanToDefault();
+      setStarJanList(freshStarJan);
     }
   };
 
@@ -365,7 +458,11 @@ export default function App() {
               <TeacherReviewPage 
                 students={students}
                 onUpdateStudents={handleUpdateStudents}
-                onOpenStudentDetail={(student) => setSelectedStudentForDetail(student)}
+                collectives={collectives}
+                onUpdateCollectives={handleUpdateCollectives}
+                starJanList={starJanList}
+                onUpdateStarJan={handleUpdateStarJan}
+                onOpenStudentDetail={(record, category) => setSelectedDetailItem({ record, category })}
                 onResetData={handleResetData}
               />
             )}
@@ -405,7 +502,11 @@ export default function App() {
               <TeacherReviewPage 
                 students={students}
                 onUpdateStudents={handleUpdateStudents}
-                onOpenStudentDetail={(student) => setSelectedStudentForDetail(student)}
+                collectives={collectives}
+                onUpdateCollectives={handleUpdateCollectives}
+                starJanList={starJanList}
+                onUpdateStarJan={handleUpdateStarJan}
+                onOpenStudentDetail={(record, category) => setSelectedDetailItem({ record, category })}
                 onResetData={handleResetData}
               />
             )}
@@ -419,12 +520,13 @@ export default function App() {
         onSwitchRole={handleSwitchRole} 
       />
 
-      {/* Detail Modal for 1 Student Dossier */}
-      {selectedStudentForDetail && (
+      {/* Detail Modal for Dossier Review (Supports SV5T, TT5T, STG) */}
+      {selectedDetailItem && (
         <StudentDossierDetailModal 
-          student={selectedStudentForDetail}
-          onClose={() => setSelectedStudentForDetail(null)}
-          onUpdateStudent={handleUpdateSingleStudent}
+          student={selectedDetailItem.record}
+          category={selectedDetailItem.category || 'sv5t'}
+          onClose={() => setSelectedDetailItem(null)}
+          onUpdateStudent={(updated) => handleUpdateRecordFromModal(updated, selectedDetailItem.category)}
         />
       )}
 

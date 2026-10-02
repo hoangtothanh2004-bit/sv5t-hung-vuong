@@ -1,19 +1,50 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, AlertCircle, Sparkles, Check, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { STANDARDS } from '../data/criteriaData';
+import { STANDARDS, COLLECTIVE_STANDARDS, STAR_JAN_STANDARDS } from '../data/criteriaData';
 
 export default function BatchScoringModal({ 
   selectedStudents, 
   onClose, 
   onConfirmBatchScore,
-  defaultStandard = 'TC2' // Defaults to TC2 (Học tập tốt) matching user's GPA scenario!
+  defaultStandard = 'TC2',
+  category = 'sv5t'
 }) {
-  const [targetStandard, setTargetStandard] = useState(defaultStandard);
-  const [targetStatus, setTargetStatus] = useState('approved');
-  const [note, setNote] = useState('Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)');
+  const getStandards = () => {
+    if (category === 'tt5t') return COLLECTIVE_STANDARDS;
+    if (category === 'stg') return STAR_JAN_STANDARDS;
+    return STANDARDS;
+  };
 
-  const QUICK_NOTES = [
+  const currentStandards = getStandards();
+  const initialTargetStandard = currentStandards.some(s => s.code === defaultStandard) 
+    ? defaultStandard 
+    : currentStandards[0]?.code || 'ALL';
+
+  const [targetStandard, setTargetStandard] = useState(initialTargetStandard);
+  const [targetStatus, setTargetStatus] = useState('approved');
+  
+  const getInitialNote = () => {
+    if (category === 'tt5t') return 'Tập thể hoàn thành xuất sắc các chỉ tiêu thi đua năm học';
+    if (category === 'stg') return 'Cán bộ Đoàn - Hội hoàn thành xuất sắc nhiệm vụ công tác';
+    return 'Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)';
+  };
+
+  const [note, setNote] = useState(getInitialNote);
+
+  const QUICK_NOTES = category === 'tt5t' ? [
+    'Tập thể hoàn thành xuất sắc các chỉ tiêu thi đua năm học',
+    '100% đoàn viên, hội viên không vi phạm kỷ luật',
+    'Đạt và vượt chỉ tiêu tỷ lệ sinh viên đạt danh hiệu SV5T',
+    'Tập thể có nhiều thành tích nổi bật trong học tập & NCKH',
+    'Hồ sơ minh chứng đầy đủ, có xác nhận hợp lệ của Khoa'
+  ] : category === 'stg' ? [
+    'Cán bộ Đoàn - Hội hoàn thành xuất sắc nhiệm vụ công tác',
+    'Đạt thành tích học tập loại Giỏi/Xuất sắc và ĐRL Xuất sắc',
+    'Có bằng khen/giấy khen thành tích công tác Đoàn - Hội tiêu biểu',
+    'Giữ chức vụ cán bộ chủ chốt từ 1 năm học trở lên',
+    'Hồ sơ minh chứng đầy đủ, hợp lệ theo quy chế xét chọn'
+  ] : [
     'Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)',
     'Đạt chuẩn rèn luyện Xuất sắc năm học (>= 90 điểm)',
     'Đã đối soát chứng chỉ ngoại ngữ B1 hợp lệ',
@@ -30,7 +61,6 @@ export default function BatchScoringModal({
       note: note.trim() || 'Thẩm định hàng loạt cấp trường'
     });
 
-    // Celebratory confetti animation on approval!
     if (targetStatus === 'approved') {
       try {
         confetti({
@@ -45,6 +75,8 @@ export default function BatchScoringModal({
 
     onClose();
   };
+
+  const entityName = category === 'tt5t' ? 'tập thể' : (category === 'stg' ? 'cán bộ' : 'sinh viên');
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -72,7 +104,7 @@ export default function BatchScoringModal({
                 Chấm thẩm định hàng loạt
               </h3>
               <p style={{ fontSize: '0.82rem', opacity: 0.9 }}>
-                Áp dụng kết quả cùng lúc cho <strong>{selectedStudents.length} sinh viên</strong> đã chọn
+                Áp dụng kết quả cùng lúc cho <strong>{selectedStudents.length} {entityName}</strong> đã chọn
               </p>
             </div>
           </div>
@@ -84,7 +116,7 @@ export default function BatchScoringModal({
 
         {/* Body */}
         <div className="modal-body">
-          {/* Selected Students Preview Strip */}
+          {/* Selected Preview Strip */}
           <div style={{
             background: 'var(--bg-subtle)',
             border: '1px solid var(--border-color)',
@@ -94,10 +126,7 @@ export default function BatchScoringModal({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)' }}>
-                DANH SÁCH ỨNG VIÊN ĐƯỢC CHẤM ({selectedStudents.length}):
-              </span>
-              <span className="badge badge-gpa">
-                {selectedStudents.filter(s => s.gpa >= 3.2).length} sinh viên GPA Giỏi
+                DANH SÁCH {entityName.toUpperCase()} ĐƯỢC CHỌN ({selectedStudents.length}):
               </span>
             </div>
 
@@ -116,8 +145,9 @@ export default function BatchScoringModal({
                     gap: '4px'
                   }}
                 >
-                  <strong>{s.name}</strong> 
-                  <span style={{ color: 'var(--primary)', fontWeight: '600' }}>({s.gpa})</span>
+                  <strong>{s.name || s.shortName}</strong>
+                  {s.className && <span style={{ color: 'var(--text-muted)' }}>({s.className})</span>}
+                  {s.gpa && <span style={{ color: 'var(--primary)', fontWeight: '600' }}>• GPA: {s.gpa}</span>}
                 </span>
               ))}
             </div>
@@ -129,17 +159,21 @@ export default function BatchScoringModal({
               1. Chọn tiêu chuẩn cần chấm hàng loạt:
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              {STANDARDS.map(st => (
+              {currentStandards.map(st => (
                 <button
                   key={st.code}
                   type="button"
                   onClick={() => {
                     setTargetStandard(st.code);
                     if (st.code === 'TC2') setNote('Đạt chuẩn tự động theo tiêu chí GPA Giỏi/Xuất sắc (>= 3.20)');
-                    else if (st.code === 'TC1') setNote('Đạt chuẩn Rèn luyện Xuất sắc năm học 2024-2025 (>= 90 điểm)');
-                    else if (st.code === 'TC5') setNote('Đã đối soát chứng chỉ Ngoại ngữ chuẩn đầu ra hợp lệ');
-                    else if (st.code === 'TC4') setNote('Hoàn thành xuất sắc Chiến dịch Tình nguyện & Hiến máu');
-                    else if (st.code === 'TC3') setNote('Đạt danh hiệu Thanh niên khỏe cấp trường');
+                    else if (st.code === 'TC1') setNote('Đạt chuẩn Rèn luyện Xuất sắc năm học (>= 90 điểm)');
+                    else if (st.code === 'TT1') setNote('100% đoàn viên, sinh viên chấp hành tốt kỷ luật');
+                    else if (st.code === 'TT2') setNote('Đạt và vượt chỉ tiêu tỷ lệ sinh viên đạt danh hiệu SV5T');
+                    else if (st.code === 'TT3') setNote('Tập thể có kết quả học tập và NCKH đạt chuẩn');
+                    else if (st.code === 'STG1') setNote('Cán bộ Đoàn - Hội hoàn thành xuất sắc nhiệm vụ công tác');
+                    else if (st.code === 'STG2') setNote('GPA và ĐRL đạt chuẩn danh hiệu Sao Tháng Giêng');
+                    else if (st.code === 'STG3') setNote('Đạt thành tích khen thưởng tiêu biểu công tác Đoàn - Hội');
+                    else setNote(`Hội đồng thẩm định phê duyệt tiêu chuẩn ${st.code}`);
                   }}
                   style={{
                     padding: '10px 14px',
@@ -158,34 +192,35 @@ export default function BatchScoringModal({
                   }}
                 >
                   <span>{st.code}: {st.name}</span>
-                  {targetStandard === st.code && <Check size={16} />}
+                  {targetStandard === st.code && <Check size={16} color="var(--primary)" />}
                 </button>
               ))}
 
+              {/* Option to approve ALL standards simultaneously */}
               <button
                 type="button"
                 onClick={() => {
                   setTargetStandard('ALL');
-                  setNote('Hồ sơ xuất sắc, duyệt Đạt toàn bộ 5/5 tiêu chuẩn Sinh viên 5 Tốt');
+                  setNote('Hội đồng xét chọn phê duyệt hoàn thành tất cả các tiêu chuẩn');
                 }}
                 style={{
-                  gridColumn: 'span 2',
                   padding: '10px 14px',
                   borderRadius: 'var(--radius-md)',
                   border: targetStandard === 'ALL' ? '2px solid var(--gold)' : '1px solid var(--border-color)',
-                  background: targetStandard === 'ALL' ? 'var(--gold-light)' : 'var(--bg-subtle)',
-                  color: targetStandard === 'ALL' ? '#92400e' : 'var(--text-main)',
-                  fontWeight: targetStandard === 'ALL' ? '700' : '500',
+                  background: targetStandard === 'ALL' ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-subtle)',
+                  color: targetStandard === 'ALL' ? '#d97706' : 'var(--text-main)',
+                  fontWeight: targetStandard === 'ALL' ? '800' : '500',
                   fontSize: '0.84rem',
                   textAlign: 'left',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  gridColumn: 'span 2'
                 }}
               >
-                <span>🌟 Tất cả 5 Tiêu chuẩn (Duyệt Đạt danh hiệu hoàn tất)</span>
-                {targetStandard === 'ALL' && <Check size={16} />}
+                <span>⭐ DUYỆT TẤT CẢ CÁC TIÊU CHUẨN CÙNG LÚC</span>
+                {targetStandard === 'ALL' && <Check size={16} color="#d97706" />}
               </button>
             </div>
           </div>
@@ -193,47 +228,28 @@ export default function BatchScoringModal({
           {/* Form Step 2: Choose Decision */}
           <div className="form-group" style={{ marginBottom: '18px' }}>
             <label className="form-label">
-              2. Quyết định thẩm định:
+              2. Kết luận thẩm định:
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button"
                 onClick={() => setTargetStatus('approved')}
-                style={{
-                  padding: '10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: targetStatus === 'approved' ? '2px solid var(--success)' : '1px solid var(--border-color)',
-                  background: targetStatus === 'approved' ? 'var(--success-light)' : 'var(--bg-subtle)',
-                  color: targetStatus === 'approved' ? '#065f46' : 'var(--text-main)',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
+                className={`btn ${targetStatus === 'approved' ? 'btn-success' : 'btn-outline'}`}
+                style={{ flex: 1, padding: '10px' }}
               >
                 <CheckCircle size={16} />
-                <span>Duyệt ĐẠT</span>
+                <span>Đạt chuẩn (Phê duyệt)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTargetStatus('needs_evidence')}
-                style={{
+                className={`btn ${targetStatus === 'needs_evidence' ? 'btn-warning' : 'btn-outline'}`}
+                style={{ 
+                  flex: 1, 
                   padding: '10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: targetStatus === 'needs_evidence' ? '2px solid var(--gold)' : '1px solid var(--border-color)',
-                  background: targetStatus === 'needs_evidence' ? 'var(--gold-light)' : 'var(--bg-subtle)',
-                  color: targetStatus === 'needs_evidence' ? '#92400e' : 'var(--text-main)',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
+                  background: targetStatus === 'needs_evidence' ? 'var(--gold)' : 'transparent',
+                  color: targetStatus === 'needs_evidence' ? '#000' : 'inherit'
                 }}
               >
                 <AlertCircle size={16} />
@@ -243,20 +259,8 @@ export default function BatchScoringModal({
               <button
                 type="button"
                 onClick={() => setTargetStatus('rejected')}
-                style={{
-                  padding: '10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: targetStatus === 'rejected' ? '2px solid var(--danger)' : '1px solid var(--border-color)',
-                  background: targetStatus === 'rejected' ? 'var(--danger-light)' : 'var(--bg-subtle)',
-                  color: targetStatus === 'rejected' ? '#991b1b' : 'var(--text-main)',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
+                className={`btn ${targetStatus === 'rejected' ? 'btn-danger' : 'btn-outline'}`}
+                style={{ flex: 1, padding: '10px' }}
               >
                 <X size={16} />
                 <span>Không đạt</span>
@@ -264,59 +268,55 @@ export default function BatchScoringModal({
             </div>
           </div>
 
-          {/* Form Step 3: Note & Quick Reason Templates */}
+          {/* Form Step 3: Note */}
           <div className="form-group">
             <label className="form-label">
-              3. Ghi chú lý do thẩm định:
+              3. Ghi chú / Nhận xét của Hội đồng:
             </label>
             <input 
               type="text" 
               className="input-control" 
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Nhập lý do thẩm định hoặc chọn mẫu nhanh bên dưới..."
+              placeholder="Nhập nhận xét phê duyệt..."
+              style={{ marginBottom: '10px' }}
             />
 
-            <div style={{ marginTop: '8px' }}>
-              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                Mẫu lý do nhanh (click để điền):
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                {QUICK_NOTES.map((qn, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setNote(qn)}
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '3px 8px',
-                      borderRadius: 'var(--radius-full)',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-subtle)',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    + {qn.slice(0, 38)}...
-                  </button>
-                ))}
-              </div>
+            {/* Quick Note Pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {QUICK_NOTES.map((qn, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setNote(qn)}
+                  style={{
+                    background: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-full)',
+                    padding: '4px 10px',
+                    fontSize: '0.74rem',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.1s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.borderColor = 'var(--primary)'}
+                  onMouseLeave={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                >
+                  + {qn}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="modal-footer">
+        <div className="modal-footer" style={{ justifyContent: 'flex-end', gap: '10px' }}>
           <button className="btn btn-outline" onClick={onClose}>
             Hủy bỏ
           </button>
-          <button 
-            className="btn btn-gradient btn-lg" 
-            onClick={handleApply}
-            style={{ fontWeight: '700', gap: '10px' }}
-          >
-            <span>Xác nhận chấm cho {selectedStudents.length} sinh viên</span>
-            <ArrowRight size={18} />
+          <button className="btn btn-primary btn-lg" onClick={handleApply}>
+            <span>Xác nhận chấm ({selectedStudents.length})</span>
+            <ArrowRight size={16} />
           </button>
         </div>
       </div>

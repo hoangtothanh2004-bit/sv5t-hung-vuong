@@ -253,45 +253,92 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
 
           <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', textAlign: 'right' }}>
             <div>Năm học xét chọn: <strong style={{ color: 'var(--primary)' }}>2026 - 2027</strong></div>
-            <div style={{ marginTop: '2px' }}>Hội đồng xét chọn: <strong>Trường Đại học Hùng Vương</strong></div>
+            <div style={{ marginTop: '2px' }}>Hội đồng xét chọn: <strong style={{ color: 'var(--primary)' }}>Hội sinh viên trường Đại học Hùng Vương</strong></div>
           </div>
         </div>
 
-        {/* Basic Student Info Details */}
+        {/* Basic Student Info Details - Gọn gàng, khoa học, khắc phục chữ dài */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-          gap: '10px 16px',
-          fontSize: '0.84rem',
           marginTop: '16px',
-          paddingTop: '14px',
-          borderTop: '1px solid var(--border-color)'
+          paddingTop: '16px',
+          borderTop: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          fontSize: '0.85rem'
         }}>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Ngày sinh: </span>
-            <strong>{student.dob}</strong>
+          {/* Hàng 1: Ngày sinh, Dân tộc, Điện thoại, Email (4 cột cân đối) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '10px 18px',
+            alignItems: 'center'
+          }}>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Ngày sinh: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{student.dob}</strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Dân tộc: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{student.ethnicity}</strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Điện thoại: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{student.phone}</strong>
+            </div>
+            <div style={{ wordBreak: 'break-all' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Email: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{student.email}</strong>
+            </div>
           </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Dân tộc: </span>
-            <strong>{student.ethnicity}</strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Chức vụ Đoàn, Hội: </span>
-            <strong>{student.position || 'Hội viên'}</strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Đảng viên: </span>
-            <strong style={{ color: 'var(--primary)' }}>
-              {student.unionStatus?.toLowerCase().includes('đảng') ? 'Có' : (student.isPartyMember || 'Không')}
-            </strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Điện thoại: </span>
-            <strong>{student.phone}</strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Email: </span>
-            <strong>{student.email}</strong>
+
+          {/* Hàng 2: Chức vụ Đoàn, Hội & Đảng viên (Ưu tiên không gian rộng cho Chức vụ dài) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px 20px',
+            background: 'var(--bg-subtle)',
+            padding: '10px 16px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 320px' }}>
+              <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Chức vụ Đoàn, Hội:</span>
+              <span style={{
+                fontWeight: '700',
+                color: 'var(--primary)',
+                background: 'var(--primary-light)',
+                padding: '3px 12px',
+                borderRadius: '6px',
+                display: 'inline-block',
+                lineHeight: '1.4'
+              }}>
+                {student.position || 'Hội viên'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Đảng viên:</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px 12px',
+                borderRadius: '12px',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                background: student.unionStatus?.toLowerCase().includes('đảng') || student.isPartyMember === 'Có' 
+                  ? 'rgba(16, 185, 129, 0.12)' 
+                  : 'var(--bg-card)',
+                color: student.unionStatus?.toLowerCase().includes('đảng') || student.isPartyMember === 'Có' 
+                  ? 'var(--success)' 
+                  : 'var(--text-muted)',
+                border: `1px solid ${student.unionStatus?.toLowerCase().includes('đảng') || student.isPartyMember === 'Có' ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-color)'}`
+              }}>
+                {student.unionStatus?.toLowerCase().includes('đảng') ? 'Có' : (student.isPartyMember || 'Không')}
+              </span>
+            </div>
           </div>
         </div>
       </div>

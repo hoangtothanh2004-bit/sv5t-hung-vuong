@@ -1,8 +1,11 @@
 import { generateFullStudentList } from '../data/mockStudents';
+import { INITIAL_COLLECTIVES, INITIAL_STAR_JAN } from '../data/mockCategoriesData';
 
 const STORAGE_KEY_STUDENTS = 'hvu_sv5t_students_v1';
 const STORAGE_KEY_USER = 'hvu_sv5t_current_user_v1';
 const STORAGE_KEY_SETTINGS = 'hvu_sv5t_settings_v1';
+const STORAGE_KEY_COLLECTIVES = 'hvu_sv5t_collectives_v1';
+const STORAGE_KEY_STAR_JAN = 'hvu_sv5t_starjan_v1';
 
 export function getStoredStudents() {
   try {
@@ -30,6 +33,60 @@ export function resetStudentsToDefault() {
   const fresh = generateFullStudentList();
   saveStudents(fresh);
   return fresh;
+}
+
+export function getStoredCollectives() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_COLLECTIVES);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Error reading collectives from localStorage', e);
+  }
+  const initial = INITIAL_COLLECTIVES;
+  saveCollectives(initial);
+  return initial;
+}
+
+export function saveCollectives(collectives) {
+  try {
+    localStorage.setItem(STORAGE_KEY_COLLECTIVES, JSON.stringify(collectives));
+  } catch (e) {
+    console.error('Error saving collectives to localStorage', e);
+  }
+}
+
+export function resetCollectivesToDefault() {
+  saveCollectives(INITIAL_COLLECTIVES);
+  return INITIAL_COLLECTIVES;
+}
+
+export function getStoredStarJan() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_STAR_JAN);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Error reading starJan from localStorage', e);
+  }
+  const initial = INITIAL_STAR_JAN;
+  saveStarJan(initial);
+  return initial;
+}
+
+export function saveStarJan(starJanList) {
+  try {
+    localStorage.setItem(STORAGE_KEY_STAR_JAN, JSON.stringify(starJanList));
+  } catch (e) {
+    console.error('Error saving starJan to localStorage', e);
+  }
+}
+
+export function resetStarJanToDefault() {
+  saveStarJan(INITIAL_STAR_JAN);
+  return INITIAL_STAR_JAN;
 }
 
 export function getCurrentUser() {

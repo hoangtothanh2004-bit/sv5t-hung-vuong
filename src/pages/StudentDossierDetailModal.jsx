@@ -5,19 +5,37 @@ import {
   AlertCircle, 
   Eye, 
   Save, 
-  Sparkles
+  Sparkles,
+  Users,
+  Award,
+  Star
 } from 'lucide-react';
-import { STANDARDS } from '../data/criteriaData';
+import { STANDARDS, COLLECTIVE_STANDARDS, STAR_JAN_STANDARDS } from '../data/criteriaData';
 import EvidenceModal from '../components/EvidenceModal';
 import confetti from 'canvas-confetti';
 import { DEFAULT_AVATAR } from '../utils/avatar';
 
-export default function StudentDossierDetailModal({ student, onClose, onUpdateStudent }) {
+export default function StudentDossierDetailModal({ 
+  student, 
+  category = 'sv5t', 
+  onClose, 
+  onUpdateStudent 
+}) {
   const [activeEvidence, setActiveEvidence] = useState(null);
   const [evidenceStandardName, setEvidenceStandardName] = useState('');
-  const [criteriaEdits, setCriteriaEdits] = useState({ ...student.criteriaStatus });
+  const [criteriaEdits, setCriteriaEdits] = useState({ ...(student?.criteriaStatus || {}) });
 
   if (!student) return null;
+
+  // Lấy danh sách tiêu chuẩn tương ứng theo danh mục
+  const getCategoryStandards = () => {
+    if (category === 'tt5t') return COLLECTIVE_STANDARDS;
+    if (category === 'stg') return STAR_JAN_STANDARDS;
+    return STANDARDS;
+  };
+
+  const activeStandards = getCategoryStandards();
+  const totalStandardsCount = activeStandards.length;
 
   const handleStatusChange = (stdCode, newStatus) => {
     setCriteriaEdits(prev => ({
@@ -26,7 +44,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
         ...prev[stdCode],
         status: newStatus,
         date: new Date().toISOString().split('T')[0],
-        verifiedBy: 'Hội đồng HVU'
+        verifiedBy: 'Hội sinh viên HVU'
       }
     }));
   };
@@ -42,8 +60,8 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
   };
 
   const handleSaveAll = () => {
-    const approvedCount = Object.values(criteriaEdits).filter(c => c.status === 'approved').length;
-    const isFull = approvedCount === 5;
+    const approvedCount = activeStandards.filter(std => criteriaEdits[std.code]?.status === 'approved').length;
+    const isFull = approvedCount === totalStandardsCount;
 
     const updated = {
       ...student,
@@ -64,8 +82,8 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
     onClose();
   };
 
-  const approvedCount = Object.values(criteriaEdits).filter(c => c.status === 'approved').length;
-  const isFullApproved = approvedCount === 5;
+  const approvedCount = activeStandards.filter(std => criteriaEdits[std.code]?.status === 'approved').length;
+  const isFullApproved = approvedCount === totalStandardsCount;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -77,23 +95,81 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
         {/* Header */}
         <div className="modal-header" style={{ background: 'var(--bg-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <img 
-              src={student.avatar || DEFAULT_AVATAR} 
-              alt={student.name}
-              style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
-            />
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>{student.name}</h3>
-                <span className={`badge ${student.gpa >= 3.6 ? 'badge-gpa-high' : 'badge-gpa'}`}>
-                  GPA: {student.gpa}
-                </span>
-                <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                  ĐRL: {student.drl}
-                </span>
+            {category === 'tt5t' ? (
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--primary-light)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px solid var(--primary)'
+              }}>
+                <Users size={28} />
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                MSSV: <strong>{student.studentCode}</strong> • {student.className} • {student.facultyName}
+            ) : (
+              <img 
+                src={student.avatar || DEFAULT_AVATAR} 
+                alt={student.name}
+                style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
+              />
+            )}
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>{student.name}</h3>
+
+                {category === 'tt5t' ? (
+                  <>
+                    <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '700' }}>
+                      Tập thể {student.shortName || student.className}
+                    </span>
+                    <span className="badge badge-subtle">
+                      {student.memberCount} hội viên
+                    </span>
+                  </>
+                ) : category === 'stg' ? (
+                  <>
+                    <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', fontWeight: '800' }}>
+                      <Star size={12} style={{ display: 'inline', marginRight: '3px' }} />
+                      Sao Tháng Giêng
+                    </span>
+                    {student.gpa && (
+                      <span className={`badge ${student.gpa >= 3.6 ? 'badge-gpa-high' : 'badge-gpa'}`}>
+                        GPA: {student.gpa}
+                      </span>
+                    )}
+                    {student.drl && (
+                      <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                        ĐRL: {student.drl}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className={`badge ${student.gpa >= 3.6 ? 'badge-gpa-high' : 'badge-gpa'}`}>
+                      GPA: {student.gpa}
+                    </span>
+                    <span className="badge" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                      ĐRL: {student.drl}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                {category === 'tt5t' ? (
+                  <>
+                    Đại diện: <strong>{student.representative}</strong> • {student.facultyName}
+                  </>
+                ) : (
+                  <>
+                    MSSV: <strong>{student.studentCode}</strong> • {student.className} • {student.facultyName} 
+                    {student.position && ` • ${student.position}`}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -101,10 +177,10 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>
-                Tiến độ xét chọn
+                Tiến độ thẩm định
               </span>
               <div style={{ fontSize: '1.2rem', fontWeight: '900', color: isFullApproved ? 'var(--success)' : 'var(--primary)' }}>
-                {approvedCount}/5 tiêu chuẩn đạt
+                {approvedCount}/{totalStandardsCount} tiêu chuẩn đạt
               </div>
             </div>
             <button className="modal-close-btn" onClick={onClose}>
@@ -113,10 +189,10 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
           </div>
         </div>
 
-        {/* Body: 5 Standards Review */}
+        {/* Body: Standards Review */}
         <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {STANDARDS.map((std, idx) => {
+            {activeStandards.map((std, idx) => {
               const currentStatus = criteriaEdits[std.code] || { status: 'pending', note: '' };
               const evidences = student.evidences?.[std.code] || [];
               const isApproved = currentStatus.status === 'approved';
@@ -129,7 +205,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
 
               return (
                 <div 
-                  key={std.id}
+                  key={std.id || std.code}
                   style={{
                     background: 'var(--bg-subtle)',
                     border: `1px solid ${isApproved ? 'var(--success)' : 'var(--border-color)'}`,
@@ -152,8 +228,8 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        background: `${std.color}20`,
-                        color: std.color,
+                        background: `${std.color || 'var(--primary)'}20`,
+                        color: std.color || 'var(--primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -206,7 +282,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                     </div>
                   </div>
 
-                  {/* Student Explanations if any */}
+                  {/* Student/Collective Explanations if any */}
                   {standardExplanations.length > 0 && (
                     <div style={{ 
                       background: 'var(--bg-card)', 
@@ -217,7 +293,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                       fontSize: '0.82rem'
                     }}>
                       <div style={{ fontWeight: '700', color: 'var(--primary)', marginBottom: '4px' }}>
-                        Giải trình của sinh viên:
+                        Nội dung giải trình:
                       </div>
                       {standardExplanations.map(exp => (
                         <div key={exp.itemId} style={{ color: 'var(--text-main)', marginTop: '2px' }}>
@@ -235,7 +311,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
 
                     {evidences.length === 0 ? (
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-subtle)', fontStyle: 'italic', marginTop: '4px' }}>
-                        Sinh viên chưa tải tệp minh chứng cho tiêu chuẩn này.
+                        Chưa có tệp minh chứng tải lên cho tiêu chuẩn này.
                       </p>
                     ) : (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
@@ -259,7 +335,7 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                             }}
                           >
                             <img 
-                              src={ev.url} 
+                              src={ev.url || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80'} 
                               alt={ev.title} 
                               style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }}
                             />
@@ -273,13 +349,13 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
                     )}
                   </div>
 
-                  {/* Lecturer Reviewer Note input */}
+                  {/* Reviewer Note input */}
                   <div>
                     <input 
                       type="text" 
                       className="input-control" 
                       style={{ fontSize: '0.82rem', padding: '6px 10px' }}
-                      placeholder="Ghi chú nhận xét của Hội đồng thẩm định (ví dụ: Đã xác thực bằng cấp; Ảnh chụp mờ...)"
+                      placeholder="Ghi chú nhận xét của Hội đồng thẩm định..."
                       value={currentStatus.note || ''}
                       onChange={(e) => handleNoteChange(std.code, e.target.value)}
                     />
@@ -296,11 +372,11 @@ export default function StudentDossierDetailModal({ student, onClose, onUpdateSt
             <button 
               className="btn btn-outline btn-sm"
               onClick={() => {
-                ['TC1', 'TC2', 'TC3', 'TC4', 'TC5'].forEach(c => handleStatusChange(c, 'approved'));
+                activeStandards.forEach(c => handleStatusChange(c.code, 'approved'));
               }}
             >
               <Sparkles size={15} color="var(--gold)" />
-              <span>Duyệt đạt tất cả 5 tiêu chuẩn</span>
+              <span>Duyệt đạt tất cả {totalStandardsCount} tiêu chuẩn</span>
             </button>
           </div>
 
