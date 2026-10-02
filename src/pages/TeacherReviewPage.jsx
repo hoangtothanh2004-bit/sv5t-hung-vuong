@@ -14,9 +14,10 @@ import {
   Star,
   ShieldCheck,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  Calendar
 } from 'lucide-react';
-import { FACULTIES } from '../data/faculties';
+import { FACULTIES, ACADEMIC_YEARS } from '../data/faculties';
 import { CATEGORIES, STANDARDS, COLLECTIVE_STANDARDS, STAR_JAN_STANDARDS } from '../data/criteriaData';
 import BatchScoringModal from '../components/BatchScoringModal';
 import EvidenceModal from '../components/EvidenceModal';
@@ -34,6 +35,7 @@ export default function TeacherReviewPage({
 }) {
   // Category tab state: 'sv5t' (Sinh viên 5 tốt) | 'tt5t' (Tập thể 5T) | 'stg' (Sao Tháng Giêng)
   const [selectedCategory, setSelectedCategory] = useState('sv5t');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('2026 - 2027');
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,43 +305,90 @@ export default function TeacherReviewPage({
         </div>
       </div>
 
-      {/* 2. Category Segmented Tabs: Chia 3 mục như của sinh viên */}
-      <div className="category-segmented-bar" style={{ marginBottom: '20px' }}>
-        {CATEGORIES.map(cat => {
-          let count = 0;
-          if (cat.id === 'sv5t') count = students.length;
-          else if (cat.id === 'tt5t') count = collectives.length;
-          else if (cat.id === 'stg') count = starJanList.length;
+      {/* 2. Category Segmented Tabs & Academic Year Selector: Chia 3 mục như của sinh viên */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+        marginBottom: '20px'
+      }}>
+        <div className="category-segmented-bar" style={{ margin: 0, flex: '1 1 auto' }}>
+          {CATEGORIES.map(cat => {
+            let count = 0;
+            if (cat.id === 'sv5t') count = students.length;
+            else if (cat.id === 'tt5t') count = collectives.length;
+            else if (cat.id === 'stg') count = starJanList.length;
 
-          const isActive = selectedCategory === cat.id;
+            const isActive = selectedCategory === cat.id;
 
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                setSelectedIds([]);
-              }}
-              className={`category-seg-btn ${isActive ? 'active' : ''}`}
-              style={{ fontWeight: isActive ? '700' : '500' }}
-            >
-              {cat.id === 'tt5t' ? <Users size={17} /> : cat.id === 'stg' ? <Star size={17} /> : <Award size={17} />}
-              <span>{cat.name}</span>
-              <span style={{
-                fontSize: '0.74rem',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-card)',
-                color: isActive ? '#fff' : 'var(--text-muted)',
-                fontWeight: '700',
-                marginLeft: '4px'
-              }}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  setSelectedIds([]);
+                }}
+                className={`category-seg-btn ${isActive ? 'active' : ''}`}
+                style={{ fontWeight: isActive ? '700' : '500' }}
+              >
+                {cat.id === 'tt5t' ? <Users size={17} /> : cat.id === 'stg' ? <Star size={17} /> : <Award size={17} />}
+                <span>{cat.name}</span>
+                <span style={{
+                  fontSize: '0.74rem',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-card)',
+                  color: isActive ? '#fff' : 'var(--text-muted)',
+                  fontWeight: '700',
+                  marginLeft: '4px'
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Lựa chọn Năm học xét chọn cho giảng viên */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'var(--bg-card)',
+          padding: '7px 16px',
+          borderRadius: 'var(--radius-full)',
+          border: '1.5px solid var(--border-color)',
+          boxShadow: 'var(--shadow-xs)'
+        }}>
+          <Calendar size={16} color="var(--primary)" />
+          <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+            Năm học xét chọn:
+          </span>
+          <select
+            value={selectedAcademicYear}
+            onChange={(e) => setSelectedAcademicYear(e.target.value)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              fontWeight: '800',
+              fontSize: '0.88rem',
+              color: 'var(--primary)',
+              cursor: 'pointer',
+              outline: 'none',
+              padding: '0 2px'
+            }}
+            title="Chọn năm học xét chọn danh hiệu để thẩm định"
+          >
+            {ACADEMIC_YEARS.map(yr => (
+              <option key={yr} value={yr}>
+                {yr} {yr === '2026 - 2027' ? '(Hiện hành)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* 3. Metrics Strip thích ứng theo từng danh mục */}

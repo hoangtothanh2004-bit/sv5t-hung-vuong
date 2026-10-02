@@ -15,15 +15,18 @@ import {
   Image as ImageIcon,
   Trash2,
   CheckCircle2,
-  Save
+  Save,
+  Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { STANDARDS, CATEGORIES, COLLECTIVE_STANDARDS, STAR_JAN_STANDARDS } from '../data/criteriaData';
+import { ACADEMIC_YEARS } from '../data/faculties';
 import EvidenceModal from '../components/EvidenceModal';
 import { DEFAULT_AVATAR } from '../utils/avatar';
 
 export default function StudentStandardsPage({ student, onUpdateStudent }) {
   const [selectedCategory, setSelectedCategory] = useState('sv5t');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('2026 - 2027');
   const [activeModalItem, setActiveModalItem] = useState(null);
   const [evidenceContent, setEvidenceContent] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -251,9 +254,13 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
             </div>
           </div>
 
-          <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-            <div>Năm học xét chọn: <strong style={{ color: 'var(--primary)' }}>2026 - 2027</strong></div>
-            <div style={{ marginTop: '2px' }}>Hội đồng xét chọn: <strong style={{ color: 'var(--primary)' }}>Hội sinh viên trường Đại học Hùng Vương</strong></div>
+          <div style={{ fontSize: '0.86rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+            <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700', color: 'var(--text-subtle)' }}>
+              Cơ quan xét chọn
+            </span>
+            <div style={{ marginTop: '2px' }}>
+              Hội đồng xét chọn: <strong style={{ color: 'var(--primary)' }}>Hội sinh viên trường Đại học Hùng Vương</strong>
+            </div>
           </div>
         </div>
 
@@ -343,20 +350,68 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
         </div>
       </div>
 
-      {/* Category Tabs: Order strictly according to Item 3 */}
-      <div className="category-segmented-bar" style={{ marginBottom: '24px' }}>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`category-seg-btn ${selectedCategory === cat.id ? 'active' : ''}`}
-            style={{ fontWeight: selectedCategory === cat.id ? '700' : '500' }}
+      {/* Category Tabs & Selector for Academic Year */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+        marginBottom: '20px'
+      }}>
+        {/* Category Tabs: Order strictly according to Item 3 */}
+        <div className="category-segmented-bar" style={{ margin: 0, flex: '1 1 auto' }}>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`category-seg-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+              style={{ fontWeight: selectedCategory === cat.id ? '700' : '500' }}
+            >
+              <Award size={17} />
+              <span>{cat.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Lựa chọn Năm học xét chọn - Đưa xuống dưới dạng lựa chọn cho các năm sau */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'var(--bg-card)',
+          padding: '7px 16px',
+          borderRadius: 'var(--radius-full)',
+          border: '1.5px solid var(--border-color)',
+          boxShadow: 'var(--shadow-xs)'
+        }}>
+          <Calendar size={16} color="var(--primary)" />
+          <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+            Năm học xét chọn:
+          </span>
+          <select
+            value={selectedAcademicYear}
+            onChange={(e) => setSelectedAcademicYear(e.target.value)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              fontWeight: '800',
+              fontSize: '0.88rem',
+              color: 'var(--primary)',
+              cursor: 'pointer',
+              outline: 'none',
+              padding: '0 2px'
+            }}
+            title="Chọn năm học xét chọn danh hiệu để xem và nộp hồ sơ"
           >
-            <Award size={17} />
-            <span>{cat.name}</span>
-          </button>
-        ))}
+            {ACADEMIC_YEARS.map(yr => (
+              <option key={yr} value={yr}>
+                {yr} {yr === '2026 - 2027' ? '(Hiện hành)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Instructional alert for students */}
@@ -374,7 +429,7 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
       }}>
         <Info size={20} color="var(--primary)" style={{ flexShrink: 0 }} />
         <div>
-          <strong>Hướng dẫn nộp hồ sơ:</strong> Sinh viên theo dõi từng tiêu chuẩn, tải lên đúng tệp minh chứng theo cột <em>"Yêu cầu minh chứng"</em> và điền nội dung vào cột <em>"Giải trình"</em>. Đối với phần <em>"Đạt thêm 01 trong các tiêu chí sau"</em>, chỉ cần hoàn thành tối thiểu 01 tiêu chí để đạt chuẩn.
+          <strong>Hướng dẫn nộp hồ sơ năm học {selectedAcademicYear}:</strong> Sinh viên theo dõi từng tiêu chuẩn, tải lên đúng tệp minh chứng theo cột <em>"Yêu cầu minh chứng"</em> và điền nội dung vào cột <em>"Giải trình"</em>. Đối với phần <em>"Đạt thêm 01 trong các tiêu chí sau"</em>, chỉ cần hoàn thành tối thiểu 01 tiêu chí để đạt chuẩn.
         </div>
       </div>
 

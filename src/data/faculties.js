@@ -15,6 +15,14 @@ export const YEARS = ['Năm thứ 1', 'Năm thứ 2', 'Năm thứ 3', 'Năm th�
 export const GENDERS = ['Nam', 'Nữ'];
 export const PARTY_MEMBER_OPTIONS = ['Không', 'Có'];
 export const ACADEMIC_YEAR = '2026 - 2027';
+export const ACADEMIC_YEARS = [
+  '2026 - 2027',
+  '2025 - 2026',
+  '2024 - 2025',
+  '2023 - 2024',
+  '2027 - 2028',
+  '2028 - 2029'
+];
 export const ORG_NAME = 'Hội Sinh viên Trường Đại học Hùng Vương';
 export const UNIVERSITY_NAME = 'Trường Đại học Hùng Vương';
 
