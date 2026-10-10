@@ -437,9 +437,7 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
       {/* 4-Column Table Matrix (Item 5 & Image 5) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '26px' }}>
         {currentStandards.map((std, sIdx) => {
-          const statusObj = student.criteriaStatus?.[std.code] || { status: 'pending' };
           const evidences = student.evidences?.[std.code] || [];
-          const isApproved = statusObj.status === 'approved';
 
           // Helper to get evidence for a specific item
           const getItemEvidences = (itemId) => {
@@ -490,15 +488,6 @@ export default function StudentStandardsPage({ student, onUpdateStudent }) {
                       {std.summary}
                     </p>
                   </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span 
-                    className={`badge ${isApproved ? 'badge-approved' : 'badge-pending'}`} 
-                    style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '700' }}
-                  >
-                    {isApproved ? '✓ Đạt tiêu chuẩn' : '⏳ Đang thẩm định'}
-                  </span>
                 </div>
               </div>
 
